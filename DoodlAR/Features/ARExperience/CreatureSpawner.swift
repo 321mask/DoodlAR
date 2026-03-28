@@ -59,6 +59,7 @@ final class CreatureSpawner {
 
         // Phase 2: Morph transition
         let creatureEntity = await createCreatureEntity(for: creatureType, tintColors: features.dominantColors)
+        let customTargetScale = creatureEntity.scale // [MODIFICA] Salviamo la scala calcolata o assegnata prima di riazzerarla
         creatureEntity.scale = SIMD3(repeating: 0.001) // Start invisible
         creatureEntity.position.y = 0.0
         anchor.addChild(creatureEntity)
@@ -88,9 +89,8 @@ final class CreatureSpawner {
         )
 
         // Grow creature from flat to full size
-        let targetScale = SIMD3<Float>(repeating: 0.1)
         creatureEntity.move(
-            to: Transform(scale: targetScale, translation: SIMD3(0, 0.05, 0)),
+            to: Transform(scale: customTargetScale, translation: SIMD3(0, 0.05, 0)),
             relativeTo: anchor,
             duration: morphDuration,
             timingFunction: .easeOut
@@ -311,10 +311,19 @@ final class CreatureSpawner {
     /// Attempts to load a USDZ model for the given creature type.
     private func loadUSDZModel(for type: CreatureType, tintColors: [CGColor]) async -> Entity? {
         do {
-            let entity = try await Entity(named: type.modelName)
+            // [MODIFICA] Aggiunto .usdz e ModelEntity per robustezza di caricamento
+            let entity = try await ModelEntity.loadModel(named: "\(type.modelName).usdz")
 
-            // Normalize scale so all creatures are roughly 0.1m
-            normalizeScale(of: entity, targetSize: 0.1)
+            // [MODIFICA] Siccome i bound calcolati della mela fanno sballare la grandezza,
+            // impostiamo manualmente la scala corretta per ogni tipo.
+            switch type {
+            case .apple:
+                entity.scale = SIMD3(repeating: 0.005) // Regola questo se è ancora troppo grande/piccola
+            case .banana:
+                entity.scale = SIMD3(repeating: 0.02)  // Valore indicativo, regola a piacimento
+            default:
+                normalizeScale(of: entity, targetSize: 0.1)
+            }
 
             // Apply tint from sketch's dominant colors
             applyTint(to: entity, colors: tintColors, type: type)
@@ -438,16 +447,19 @@ final class CreatureSpawner {
 
     private func defaultColor(for type: CreatureType) -> UIColor {
         switch type {
-        case .dragon:    return .systemRed
-        case .bird:      return .systemCyan
-        case .cat:       return .systemOrange
-        case .dog:       return .systemBrown
-        case .spider:    return .darkGray
-        case .fish:      return .systemBlue
-        case .snake:     return .systemGreen
-        case .frog:      return .systemMint
-        case .butterfly: return .systemPurple
-        case .rabbit:    return .systemPink
+        case .apple:     return .systemRed
+        case .banana:    return .systemYellow
+        // MARK: Vecchie creature (Commentate come richiesto)
+        // case .dragon:    return .systemRed
+        // case .bird:      return .systemCyan
+        // case .cat:       return .systemOrange
+        // case .dog:       return .systemBrown
+        // case .spider:    return .darkGray
+        // case .fish:      return .systemBlue
+        // case .snake:     return .systemGreen
+        // case .frog:      return .systemMint
+        // case .butterfly: return .systemPurple
+        // case .rabbit:    return .systemPink
         case .unknown:   return .systemIndigo
         }
     }

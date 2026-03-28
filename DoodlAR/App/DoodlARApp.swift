@@ -63,6 +63,12 @@ struct DoodlARApp: App {
             appState.hapticSpawn.toggle()
             appState.spawnState = .alive(creatureID: UUID())
             Logger.ar.info("Spawn complete, creature alive")
+            
+            // [MODIFICA] Auto-reset to scan again after 2.5 seconds!
+            try? await Task.sleep(for: .seconds(2.5))
+            appState.spawnState = .idle
+            await cameraViewModel.resetDetection()
+            
         } catch {
             appState.hapticError.toggle()
             appState.spawnState = .failed(
@@ -80,7 +86,7 @@ struct DoodlARApp: App {
 extension SpawnState {
     /// Whether the state indicates a spawn should begin.
     var shouldSpawn: Bool {
-        if case .detected = self { return true }
+        if case .triggerSpawn = self { return true }
         return false
     }
 }

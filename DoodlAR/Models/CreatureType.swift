@@ -2,16 +2,8 @@ import Foundation
 
 /// Enum of all recognizable creature types, each mapping to a USDZ asset.
 enum CreatureType: String, CaseIterable, Codable, Sendable {
-    case dragon
-    case bird
-    case cat
-    case dog
-    case spider
-    case fish
-    case snake
-    case frog
-    case butterfly
-    case rabbit
+    case apple
+    case banana
     case unknown // mystery creature fallback
 
     /// Filename of the USDZ model (without extension).

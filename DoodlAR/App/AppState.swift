@@ -8,6 +8,7 @@ enum SpawnState: Sendable {
     case idle
     case scanning
     case detected(paperPosition: simd_float4x4)
+    case triggerSpawn
     case classifying
     case morphing
     case alive(creatureID: UUID)

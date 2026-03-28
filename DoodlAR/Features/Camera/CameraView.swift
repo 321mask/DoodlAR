@@ -42,7 +42,7 @@ struct CameraView: View {
             await cameraViewModel.loadModel()
         }
         .sheet(isPresented: $appState.isCollectionPresented) {
-            CollectionView(viewModel: collectionViewModel)
+            CollectionView(viewModel: collectionViewModel, arViewModel: arViewModel)
         }
         .sensoryFeedback(.impact(flexibility: .soft), trigger: cameraViewModel.isPaperDetected)
         .sensoryFeedback(.success, trigger: appState.hapticClassification)
@@ -131,7 +131,11 @@ struct CameraView: View {
             scanningBar
                 .transition(.move(edge: .bottom).combined(with: .opacity))
 
-        case .detected, .classifying:
+        case .detected:
+            detectedBar
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+
+        case .classifying, .triggerSpawn:
             classifyingBar
                 .transition(.opacity)
 
@@ -190,11 +194,11 @@ struct CameraView: View {
         .liquidGlassBar()
     }
 
-    private var aliveBar: some View {
+    private var detectedBar: some View {
         HStack(spacing: 12) {
             if let result = cameraViewModel.lastDetectionResult {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(result.classificationResult.creatureType.displayName)
+                    Text("\(result.classificationResult.creatureType.displayName) Found!")
                         .font(.headline)
                     Text("\(Int(result.classificationResult.confidence * 100))% match")
                         .font(.caption)
@@ -204,15 +208,16 @@ struct CameraView: View {
 
             Spacer()
 
-            Button("Collect") {
+            Button("Collect & Spawn") {
                 withAnimation(.spring(duration: 0.3)) {
                     addToCollection()
+                    appState.spawnState = .triggerSpawn
                 }
             }
             .buttonStyle(.borderedProminent)
             .tint(.green)
 
-            Button("New Scan") {
+            Button("Discard") {
                 Task {
                     withAnimation(.spring(duration: 0.3)) {
                         appState.spawnState = .idle
@@ -221,6 +226,25 @@ struct CameraView: View {
                 }
             }
             .buttonStyle(.bordered)
+        }
+        .liquidGlassBar()
+    }
+
+    private var aliveBar: some View {
+        HStack(spacing: 12) {
+            if let result = cameraViewModel.lastDetectionResult {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(.yellow)
+                    .font(.title2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(result.classificationResult.creatureType.displayName) is Alive!")
+                        .font(.headline)
+                    Text("Auto-resetting scanner...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
         }
         .liquidGlassBar()
     }

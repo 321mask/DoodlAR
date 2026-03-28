@@ -13,6 +13,7 @@
 		27DEEEEC3ED7951504A20280 /* ClassificationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCFD960020971361C181E4C /* ClassificationResult.swift */; };
 		2973D7946E8E8B26C325CB45 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427AB2E977F3352693FE211A /* AppState.swift */; };
 		2A239B2F8972B1CBA7E495DB /* MLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2EBEECA8F33AD40744C071 /* MLService.swift */; };
+		349B7FD8A8BCB8ADCFDF2655 /* creature_banana.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 240FFDC6D8D5065B8CA3FF9D /* creature_banana.usdz */; };
 		59B1CEF0AC8B515A50320DD0 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CDFC403AB956CF596D44B3B /* CameraViewModel.swift */; };
 		5AF0D9724120C5CC6FF19B9A /* Creature.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE91CBA58EF39222485E0527 /* Creature.swift */; };
 		5CA004E0640471A17CE08890 /* Logger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19892E0A5977783B7C38062D /* Logger+Extensions.swift */; };
@@ -37,6 +38,7 @@
 		E7BDB23E13271041D165E96B /* SendableFrame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AD09B89D79CE71CE1E0A21 /* SendableFrame.swift */; };
 		EAD0737F2B06BE4CFD56442F /* CreatureNavigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B6B9D0E2F21890A173526C9 /* CreatureNavigator.swift */; };
 		EB39D1F7FAE22BB0916DB1F7 /* SketchFeatures.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECCE9D7EE8A023F263469B38 /* SketchFeatures.swift */; };
+		FAF661DE13FB3D97E6065795 /* creature_apple.usdz in Resources */ = {isa = PBXBuildFile; fileRef = DEA6EFCCB80965FB73F4ACEF /* creature_apple.usdz */; };
 		FCB91C59F0C0B724A737C89C /* CollectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20597EBC8BF6EC6BCCF12EBB /* CollectionViewModel.swift */; };
 		FE40EDC7CD0C73EBF4BE1E82 /* SpatialAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48A8DD89FEAC2936C01B03E4 /* SpatialAudioService.swift */; };
 /* End PBXBuildFile section */
@@ -63,6 +65,7 @@
 		20597EBC8BF6EC6BCCF12EBB /* CollectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionViewModel.swift; sourceTree = "<group>"; };
 		20E1AE0A5B5F70B7E37E4ED3 /* ARContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARContainerView.swift; sourceTree = "<group>"; };
 		23B8D1AF8CB9080CC20B905B /* DetectionPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionPipeline.swift; sourceTree = "<group>"; };
+		240FFDC6D8D5065B8CA3FF9D /* creature_banana.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = creature_banana.usdz; sourceTree = "<group>"; };
 		24543AB7A94ECAD57BBE495C /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		25C0B83F9EA401275FD46818 /* CIImage+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CIImage+Extensions.swift"; sourceTree = "<group>"; };
 		284A8579AE32BE4BAAEF76E7 /* ARViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARViewModel.swift; sourceTree = "<group>"; };
@@ -84,17 +87,18 @@
 		9EA02E031995C4C40F737BE3 /* VisionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionService.swift; sourceTree = "<group>"; };
 		C35607172CDF01545056780B /* PersistedCreature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistedCreature.swift; sourceTree = "<group>"; };
 		DE91CBA58EF39222485E0527 /* Creature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Creature.swift; sourceTree = "<group>"; };
+		DEA6EFCCB80965FB73F4ACEF /* creature_apple.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = creature_apple.usdz; sourceTree = "<group>"; };
 		E71C8BD6ED15A48C0F577E2D /* CreatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatureTests.swift; sourceTree = "<group>"; };
 		EBA8A02F8ECC2308BEEBBE7A /* FeatureExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureExtractor.swift; sourceTree = "<group>"; };
 		ECCE9D7EE8A023F263469B38 /* SketchFeatures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchFeatures.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		1B77C35B4FA6F224A05C299A /* Audio */ = {
+		0606D71794686BF145B9898B /* audio */ = {
 			isa = PBXGroup;
 			children = (
 			);
-			path = Audio;
+			path = audio;
 			sourceTree = "<group>";
 		};
 		2EE1F6FFFAFD6C30439E27E0 /* Models */ = {
@@ -137,7 +141,7 @@
 			isa = PBXGroup;
 			children = (
 				15D3FC64CA54039BC9DE9C14 /* SketchClassifierModel.mlmodel */,
-				1B77C35B4FA6F224A05C299A /* Audio */,
+				0606D71794686BF145B9898B /* audio */,
 				DE1BDFEE0C0B755EE8CB073D /* Models */,
 				DAA093A48712B89A1BDC2056 /* Textures */,
 			);
@@ -234,6 +238,8 @@
 		DE1BDFEE0C0B755EE8CB073D /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				DEA6EFCCB80965FB73F4ACEF /* creature_apple.usdz */,
+				240FFDC6D8D5065B8CA3FF9D /* creature_banana.usdz */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -267,6 +273,7 @@
 			buildConfigurationList = F8550AD09492651D6A22ADB5 /* Build configuration list for PBXNativeTarget "DoodlAR" */;
 			buildPhases = (
 				F15D110423AE1D4628ED4E6D /* Sources */,
+				838F93265392A8C4DB2FD68A /* Resources */,
 			);
 			buildRules = (
 			);
@@ -330,6 +337,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		838F93265392A8C4DB2FD68A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FAF661DE13FB3D97E6065795 /* creature_apple.usdz in Resources */,
+				349B7FD8A8BCB8ADCFDF2655 /* creature_banana.usdz in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		56050663695342395CE6E1D5 /* Sources */ = {
@@ -457,7 +476,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -494,7 +513,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = F6KJ6KKPZT;
+				DEVELOPMENT_TEAM = M2G9M3YLQV;
 				INFOPLIST_FILE = DoodlAR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -513,7 +532,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = F6KJ6KKPZT;
+				DEVELOPMENT_TEAM = M2G9M3YLQV;
 				INFOPLIST_FILE = DoodlAR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -571,7 +590,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

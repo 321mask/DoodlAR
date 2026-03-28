@@ -2,7 +2,7 @@ name: DoodlAR
 options:
   bundleIdPrefix: com.doodlar
   deploymentTarget:
-    iOS: "26.0"
+    iOS: "18.0"
   xcodeVersion: "26.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true
@@ -12,7 +12,7 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     TARGETED_DEVICE_FAMILY: 1
-    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
 
 targets:
   DoodlAR:
@@ -21,7 +21,6 @@ targets:
     sources:
       - path: DoodlAR
         excludes:
-          - "Resources/Models/**"
           - "Resources/Textures/**"
           - "Resources/Audio/**"
     info:

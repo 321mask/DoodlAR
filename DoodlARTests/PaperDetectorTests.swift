@@ -29,18 +29,18 @@ struct PaperDetectorTests {
     // MARK: - CreatureType
 
     @Test func creatureTypeModelNames() {
-        #expect(CreatureType.dragon.modelName == "creature_dragon")
+        #expect(CreatureType.apple.modelName == "creature_apple")
         #expect(CreatureType.unknown.modelName == "creature_unknown")
     }
 
     @Test func creatureTypeDisplayNames() {
-        #expect(CreatureType.dragon.displayName == "Dragon")
-        #expect(CreatureType.butterfly.displayName == "Butterfly")
+        #expect(CreatureType.apple.displayName == "Apple")
+        #expect(CreatureType.banana.displayName == "Banana")
     }
 
     @Test func allCreatureTypesExist() {
-        // 10 known types + unknown
-        #expect(CreatureType.allCases.count == 11)
+        // 2 known types + unknown
+        #expect(CreatureType.allCases.count == 3)
     }
 
     // MARK: - ClassificationResult
@@ -61,14 +61,14 @@ struct PaperDetectorTests {
     // MARK: - CreatureType.from(label:)
 
     @Test func creatureTypeFromLabelMatchesKnownTypes() {
-        #expect(CreatureType.from(label: "dragon") == .dragon)
-        #expect(CreatureType.from(label: "Dragon") == .dragon)
-        #expect(CreatureType.from(label: "BUTTERFLY") == .butterfly)
+        #expect(CreatureType.from(label: "apple") == .apple)
+        #expect(CreatureType.from(label: "Apple") == .apple)
+        #expect(CreatureType.from(label: "BANANA") == .banana)
     }
 
     @Test func creatureTypeFromLabelReturnsUnknownForUnrecognized() {
-        #expect(CreatureType.from(label: "apple") == .unknown)
-        #expect(CreatureType.from(label: "banana") == .unknown)
+        #expect(CreatureType.from(label: "dragon") == .unknown)
+        #expect(CreatureType.from(label: "cat") == .unknown)
         #expect(CreatureType.from(label: "") == .unknown)
     }
 

@@ -45,10 +45,11 @@ actor VisionService {
     /// - Returns: The detected rectangle, or `nil` if no rectangle was found.
     func detectRectangle(in frame: SendableFrame) throws -> DetectedRectangle? {
         let request = VNDetectRectanglesRequest()
-        request.minimumAspectRatio = 0.5
+        // [MODIFICA] Parametri molto più rilassati per trovare subito il foglio anche in condizioni non ottimali
+        request.minimumAspectRatio = 0.2
         request.maximumAspectRatio = 1.0
-        request.minimumSize = 0.1
-        request.minimumConfidence = 0.6
+        request.minimumSize = 0.05
+        request.minimumConfidence = 0.2
         request.maximumObservations = 1
 
         let handler = VNImageRequestHandler(cvPixelBuffer: frame.pixelBuffer, options: [:])

@@ -10,10 +10,10 @@ struct CreatureTests {
     // MARK: - CreatureType.from(label:)
 
     @Test func fromLabelCaseInsensitive() {
-        #expect(CreatureType.from(label: "Cat") == .cat)
-        #expect(CreatureType.from(label: "CAT") == .cat)
-        #expect(CreatureType.from(label: "cat") == .cat)
-        #expect(CreatureType.from(label: "DRAGON") == .dragon)
+        #expect(CreatureType.from(label: "Apple") == .apple)
+        #expect(CreatureType.from(label: "APPLE") == .apple)
+        #expect(CreatureType.from(label: "apple") == .apple)
+        #expect(CreatureType.from(label: "BANANA") == .banana)
     }
 
     @Test func fromLabelAllKnownTypes() {
@@ -23,8 +23,8 @@ struct CreatureTests {
     }
 
     @Test func fromLabelUnknownStrings() {
-        #expect(CreatureType.from(label: "apple") == .unknown)
-        #expect(CreatureType.from(label: "banana") == .unknown)
+        #expect(CreatureType.from(label: "dragon") == .unknown)
+        #expect(CreatureType.from(label: "cat") == .unknown)
         #expect(CreatureType.from(label: "unicorn") == .unknown)
         #expect(CreatureType.from(label: "") == .unknown)
     }
@@ -33,14 +33,14 @@ struct CreatureTests {
 
     @Test func confidenceThresholdApplication() {
         let highConfidence = ClassificationResult(
-            creatureType: .dragon,
+            creatureType: .apple,
             confidence: 0.85,
             topAlternatives: []
         )
         #expect(highConfidence.confidence >= ClassificationResult.confidenceThreshold)
 
         let lowConfidence = ClassificationResult(
-            creatureType: .dragon,
+            creatureType: .apple,
             confidence: 0.2,
             topAlternatives: []
         )
@@ -99,13 +99,13 @@ struct CreatureTests {
         let image = context.makeImage()!
 
         let creature = Creature(
-            type: .dragon,
+            type: .apple,
             sketchImage: image,
             features: .empty,
             confidence: 0.92
         )
 
-        #expect(creature.type == .dragon)
+        #expect(creature.type == .apple)
         #expect(creature.confidence == 0.92)
         #expect(creature.nickname == nil)
     }
