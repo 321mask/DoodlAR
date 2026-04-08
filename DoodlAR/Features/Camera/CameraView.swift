@@ -21,6 +21,14 @@ struct CameraView: View {
             ARContainerView(viewModel: arViewModel)
                 .ignoresSafeArea()
 
+            // Transparent tap catcher — intercepts taps BEFORE they reach ARView.
+            // This is necessary because RealityKit hijacks gesture recognizers
+            // on ARView after generateCollisionShapes() is called.
+            TapCatcherView { location in
+                arViewModel.creatureSpawner.handleTapAtPoint(location)
+            }
+            .ignoresSafeArea()
+
             // Detection overlay
             if cameraViewModel.isPaperDetected, let corners = cameraViewModel.detectedCorners {
                 PaperOverlayView(corners: corners)

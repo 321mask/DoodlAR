@@ -13,9 +13,6 @@ import os
 final class CreatureSpawner {
     private let arView: ARView
 
-    /// Cache of loaded USDZ/placeholder entities by creature type.
-    private var entityCache: [CreatureType: Entity] = [:]
-
     /// Currently alive creature entities for gesture handling.
     private(set) var aliveCreatures: [Entity] = []
 
@@ -33,7 +30,6 @@ final class CreatureSpawner {
 
     init(arView: ARView) {
         self.arView = arView
-        setupTapGesture()
     }
 
     // MARK: - Spawn Sequence
@@ -45,7 +41,7 @@ final class CreatureSpawner {
         sketchImage: CGImage,
         features: SketchFeatures
     ) async throws -> Entity {
-        Logger.ar.info("Spawning \(creatureType.displayName)")
+        Logger.ar.info("[V10] ===== SPAWN START: type=\(creatureType.rawValue), displayName=\(creatureType.displayName), modelName=\(creatureType.modelName) =====")
 
         let anchor = AnchorEntity(world: worldTransform)
 
@@ -58,8 +54,11 @@ final class CreatureSpawner {
         try await Task.sleep(for: .milliseconds(600))
 
         // Phase 2: Morph transition
-        let creatureEntity = await createCreatureEntity(for: creatureType, tintColors: features.dominantColors)
-        let customTargetScale = creatureEntity.scale // [MODIFICA] Salviamo la scala calcolata o assegnata prima di riazzerarla
+        // [V10] Always load fresh — never clone from cache.
+        // Entity.clone(recursive:) does NOT reliably clone CollisionComponent,
+        // which causes arView.entity(at:) to miss the entity entirely on subsequent spawns.
+        let creatureEntity = await loadFreshCreatureEntity(for: creatureType, tintColors: features.dominantColors)
+        let customTargetScale = creatureEntity.scale
         creatureEntity.scale = SIMD3(repeating: 0.001) // Start invisible
         creatureEntity.position.y = 0.0
         anchor.addChild(creatureEntity)
@@ -107,9 +106,15 @@ final class CreatureSpawner {
             particleEntity.removeFromParent()
         }
 
-        // Phase 3: Creature alive — start idle animation loop
-        startIdleAnimationLoop(for: creatureEntity, anchor: anchor)
+        // Phase 3: Creature alive
+        // [V10 CRITICAL] After the morph animation, the entity's scale has reached its final value.
+        // We MUST re-generate collision shapes NOW, on the live entity in the scene,
+        // because .move() animation changes scale from 0.001→target and the collision
+        // shape set at load time was computed at the original scale.
+        ensureCollisionShapes(on: creatureEntity)
+
         aliveCreatures.append(creatureEntity)
+        Logger.ar.info("[V10] Creature registered. Total alive: \(self.aliveCreatures.count)")
 
         // Start ambient audio loop
         audioService.startAmbientLoop(
@@ -121,9 +126,8 @@ final class CreatureSpawner {
         // Start mesh navigation on LiDAR devices
         if isSceneReconstructionAvailable {
             let navigator = CreatureNavigator(anchor: anchor, entity: creatureEntity, arView: arView)
-            navigator.start()
             navigators[ObjectIdentifier(creatureEntity)] = navigator
-            Logger.ar.info("Navigator started for \(creatureType.displayName)")
+            Logger.ar.info("Navigator initialized (but paused) for \(creatureType.displayName)")
         }
 
         Logger.ar.info("Creature \(creatureType.displayName) spawned and alive")
@@ -132,18 +136,54 @@ final class CreatureSpawner {
 
     /// Removes all spawned creatures from the scene.
     func clearScene() {
-        // Stop all navigators
         for (_, navigator) in navigators {
             navigator.stop()
         }
         navigators.removeAll()
 
-        // Stop all audio
         audioService.stopAllAudio()
 
         arView.scene.anchors.removeAll()
         aliveCreatures.removeAll()
         Logger.ar.info("Scene cleared")
+    }
+
+    // MARK: - Collision Shape Guarantee
+
+    /// Ensures the entity (and its children) have valid collision shapes for tap detection.
+    /// Called AFTER the morph animation completes so the entity is at its final scale.
+    private func ensureCollisionShapes(on entity: Entity) {
+        // First try: generate collision shapes from the model mesh itself.
+        // This works on ModelEntity and its children.
+        if let modelEntity = entity as? ModelEntity {
+            modelEntity.generateCollisionShapes(recursive: true)
+            Logger.ar.info("[V10] Generated collision shapes from ModelEntity mesh (recursive)")
+            return
+        }
+
+        // Fallback: walk children looking for ModelEntity
+        var foundModel = false
+        for child in entity.children {
+            if let childModel = child as? ModelEntity {
+                childModel.generateCollisionShapes(recursive: true)
+                foundModel = true
+            }
+        }
+        if foundModel {
+            Logger.ar.info("[V10] Generated collision shapes on child ModelEntities")
+            return
+        }
+
+        // Last resort: create a manual box from visual bounds
+        let bounds = entity.visualBounds(relativeTo: entity)
+        guard bounds.extents.x > 0, bounds.extents.y > 0, bounds.extents.z > 0 else {
+            Logger.ar.warning("[V10] Visual bounds are zero — cannot create collision shape")
+            return
+        }
+        let box = ShapeResource.generateBox(size: bounds.extents)
+            .offsetBy(translation: bounds.center)
+        entity.components.set(CollisionComponent(shapes: [box]))
+        Logger.ar.info("[V10] Created manual box collision shape from visual bounds")
     }
 
     // MARK: - Particle Effects
@@ -152,7 +192,6 @@ final class CreatureSpawner {
     private func createSpawnParticles(color: UIColor) -> Entity {
         let entity = Entity()
 
-        // Create small sparkle cubes that scatter outward
         let particleCount = 12
         for i in 0..<particleCount {
             let angle = Float(i) / Float(particleCount) * .pi * 2
@@ -160,12 +199,9 @@ final class CreatureSpawner {
             let material = UnlitMaterial(color: color.withAlphaComponent(0.8))
             let particle = ModelEntity(mesh: particleMesh, materials: [material])
 
-            // Start at center
             particle.position = .zero
-
             entity.addChild(particle)
 
-            // Scatter outward
             let radius: Float = 0.06
             let targetPos = SIMD3<Float>(
                 cos(angle) * radius,
@@ -195,7 +231,6 @@ final class CreatureSpawner {
         let bobHeight: Float = 0.012
         let bobDuration: TimeInterval = 1.2
 
-        // Use a recursive async loop for the bob animation
         Task { [weak entity, weak anchor] in
             var goingUp = true
             while let entity, let anchor, entity.parent != nil {
@@ -222,105 +257,142 @@ final class CreatureSpawner {
         }
     }
 
-    // MARK: - Tap Gesture
+    // MARK: - Tap Handling (called from TapCatcherView)
 
-    /// Sets up a tap gesture recognizer on the AR view for creature interaction.
-    private func setupTapGesture() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-        arView.addGestureRecognizer(tap)
-    }
+    /// Receives a tap coordinate from the SwiftUI TapCatcherView overlay.
+    /// This bypasses ARView's internal gesture system which blocks taps after
+    /// collision shapes are generated.
+    func handleTapAtPoint(_ location: CGPoint) {
+        print("[DOODLAR] handleTapAtPoint at (\(location.x), \(location.y)). Alive: \(aliveCreatures.count)")
 
-    /// Handles a tap on the AR view — if it hits a creature, play a reaction.
-    @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
-        let location = recognizer.location(in: arView)
-
-        guard let hitEntity = arView.entity(at: location) else { return }
-
-        // Check if the tapped entity (or its parent) is one of our alive creatures
-        var target: Entity? = hitEntity
-        while let entity = target {
-            if aliveCreatures.contains(where: { $0 === entity }) {
-                playTapReaction(on: entity)
-                return
+        // Strategy 1: RealityKit collision-based hit test
+        if let hitEntity = arView.entity(at: location) {
+            print("[DOODLAR] entity(at:) hit: \(hitEntity.name), id: \(hitEntity.id)")
+            var target: Entity? = hitEntity
+            while let entity = target {
+                if aliveCreatures.contains(where: { $0 === entity }) {
+                    print("[DOODLAR] Matched via collision hit!")
+                    playTapReaction(on: entity)
+                    return
+                }
+                target = entity.parent
             }
-            target = entity.parent
+        } else {
+            print("[DOODLAR] entity(at:) returned nil")
+        }
+
+        // Strategy 2: Projection fallback — works even if collision shapes are broken
+        var closestCreature: Entity?
+        var closestDistance: CGFloat = .greatestFiniteMagnitude
+
+        for creature in aliveCreatures {
+            let worldPos = creature.position(relativeTo: nil)
+            guard let screenPos = arView.project(worldPos) else { continue }
+            let dist = hypot(location.x - screenPos.x, location.y - screenPos.y)
+            if dist < closestDistance {
+                closestDistance = dist
+                closestCreature = creature
+            }
+        }
+
+        if closestDistance < 150, let creature = closestCreature {
+            print("[DOODLAR] Fallback hit! Distance: \(closestDistance) pts")
+            playTapReaction(on: creature)
+        } else {
+            print("[DOODLAR] No creature near tap (closest: \(closestDistance) pts)")
         }
     }
 
     /// Plays a bounce reaction when a creature is tapped.
     private func playTapReaction(on entity: Entity) {
-        Logger.ar.debug("Creature tapped — playing reaction")
-
         guard let parent = entity.parent else { return }
+
+        print("[DOODLAR] TAP DETECTED on entity \(entity.id)")
+
+        // Cancel any running animation so we can always restart
+        entity.stopAllAnimations()
 
         // Play tap sound
         let isMuted = appState?.isMuted ?? false
         audioService.playTapSound(on: entity, isMuted: isMuted)
 
-        let currentTransform = entity.transform
-        let jumpHeight: Float = 0.04
+        // Use a fixed base Y of 0.05 (the spawn landing height) to prevent drift
+        let currentScale = entity.scale
+        let currentPos = entity.transform.translation
+        let baseTranslation = SIMD3<Float>(currentPos.x, 0.05, currentPos.z)
+        let apexTranslation = SIMD3<Float>(currentPos.x, 0.05 + 0.15, currentPos.z)
 
-        // Jump up
-        let jumpUp = Transform(
-            scale: SIMD3(repeating: currentTransform.scale.x * 1.15),
-            rotation: currentTransform.rotation,
-            translation: SIMD3(
-                currentTransform.translation.x,
-                currentTransform.translation.y + jumpHeight,
-                currentTransform.translation.z
-            )
+        let jumpDuration: TimeInterval = 0.30
+        let fallDuration: TimeInterval = 0.30
+
+        // 360° spin split across up + down
+        let halfSpin = simd_quatf(angle: .pi, axis: SIMD3<Float>(0, 1, 0))
+        let apexRotation = (entity.transform.rotation * halfSpin).normalized
+        let landRotation = (apexRotation * halfSpin).normalized
+
+        let apexTransform = Transform(
+            scale: currentScale,
+            rotation: apexRotation,
+            translation: apexTranslation
         )
 
-        entity.move(to: jumpUp, relativeTo: parent, duration: 0.2, timingFunction: .easeOut)
+        let landTransform = Transform(
+            scale: currentScale,
+            rotation: landRotation,
+            translation: baseTranslation
+        )
 
-        // Come back down
+        // Jump up
+        entity.move(to: apexTransform, relativeTo: parent, duration: jumpDuration, timingFunction: .easeOut)
+
+        // Fall down, then regenerate collision shapes
         Task {
-            try? await Task.sleep(for: .milliseconds(200))
-            entity.move(
-                to: currentTransform,
-                relativeTo: parent,
-                duration: 0.3,
-                timingFunction: .easeIn
-            )
+            try? await Task.sleep(for: .milliseconds(Int(jumpDuration * 1000)))
+            guard entity.parent != nil else { return }
+
+            entity.move(to: landTransform, relativeTo: parent, duration: fallDuration, timingFunction: .easeIn)
+
+            try? await Task.sleep(for: .milliseconds(Int(fallDuration * 1000) + 150))
+            guard entity.parent != nil else { return }
+
+            // Regenerate collision shapes so the next tap works
+            self.ensureCollisionShapes(on: entity)
+            print("[DOODLAR] Animation complete, collision shapes regenerated")
         }
     }
 
     // MARK: - Entity Creation
 
-    /// Creates the creature entity — loads USDZ if available, otherwise falls back to placeholder.
-    private func createCreatureEntity(
+    /// [V10] Always loads a fresh USDZ model — no caching.
+    /// Entity.clone(recursive:) does NOT reliably copy CollisionComponent,
+    /// which causes tap detection to fail on cloned entities.
+    private func loadFreshCreatureEntity(
         for type: CreatureType,
         tintColors: [CGColor]
     ) async -> Entity {
-        if let cached = entityCache[type] {
-            return cached.clone(recursive: true)
-        }
-
         // Try loading a real USDZ model
         if let usdzEntity = await loadUSDZModel(for: type, tintColors: tintColors) {
-            entityCache[type] = usdzEntity
-            return usdzEntity.clone(recursive: true)
+            return usdzEntity
         }
 
         // Fall back to colored box placeholder
-        let placeholder = createPlaceholderEntity(for: type, tintColors: tintColors)
-        entityCache[type] = placeholder
-        return placeholder.clone(recursive: true)
+        return createPlaceholderEntity(for: type, tintColors: tintColors)
     }
 
     /// Attempts to load a USDZ model for the given creature type.
     private func loadUSDZModel(for type: CreatureType, tintColors: [CGColor]) async -> Entity? {
         do {
-            // [MODIFICA] Aggiunto .usdz e ModelEntity per robustezza di caricamento
-            let entity = try await ModelEntity.loadModel(named: "\(type.modelName).usdz")
+            let modelFileName = "\(type.modelName).usdz"
+            Logger.ar.info("[V10] Loading USDZ file: \(modelFileName) for type: \(type.rawValue)")
+            let entity = try await ModelEntity.loadModel(named: modelFileName)
+            Logger.ar.info("[V10] USDZ loaded successfully. Mesh bounds: \(entity.visualBounds(relativeTo: nil).extents)")
 
-            // [MODIFICA] Siccome i bound calcolati della mela fanno sballare la grandezza,
-            // impostiamo manualmente la scala corretta per ogni tipo.
+            // Set manual scale per creature type
             switch type {
             case .apple:
-                entity.scale = SIMD3(repeating: 0.005) // Regola questo se è ancora troppo grande/piccola
+                entity.scale = SIMD3(repeating: 0.005)
             case .banana:
-                entity.scale = SIMD3(repeating: 0.02)  // Valore indicativo, regola a piacimento
+                entity.scale = SIMD3(repeating: 0.02)
             default:
                 normalizeScale(of: entity, targetSize: 0.1)
             }
@@ -328,8 +400,8 @@ final class CreatureSpawner {
             // Apply tint from sketch's dominant colors
             applyTint(to: entity, colors: tintColors, type: type)
 
-            // Generate collision shapes for tap hit-testing
-            entity.generateCollisionShapes(recursive: true)
+            // Note: Collision shapes will be generated AFTER morph animation
+            // by ensureCollisionShapes(), when the entity is at final scale in the scene.
 
             Logger.ar.info("Loaded USDZ model: \(type.modelName)")
             return entity
@@ -356,8 +428,6 @@ final class CreatureSpawner {
         } else {
             tintColor = defaultColor(for: type)
         }
-
-        // Iterate over all model entities in the hierarchy
         applyTintRecursive(to: entity, tint: tintColor)
     }
 
@@ -391,7 +461,6 @@ final class CreatureSpawner {
         }
 
         let entity = ModelEntity(mesh: mesh, materials: [material])
-        // Lay flat on the surface
         entity.transform.rotation = simd_quatf(angle: -.pi / 2, axis: SIMD3(1, 0, 0))
         return entity
     }
@@ -415,12 +484,10 @@ final class CreatureSpawner {
 
         let entity = ModelEntity(mesh: mesh, materials: [material])
 
-        // Floating label
         let labelEntity = createLabel(type.displayName)
         labelEntity.position.y = size / 2 + 0.025
         entity.addChild(labelEntity)
 
-        // Collision shape for tap detection and physics
         entity.generateCollisionShapes(recursive: false)
 
         return entity
@@ -449,17 +516,6 @@ final class CreatureSpawner {
         switch type {
         case .apple:     return .systemRed
         case .banana:    return .systemYellow
-        // MARK: Vecchie creature (Commentate come richiesto)
-        // case .dragon:    return .systemRed
-        // case .bird:      return .systemCyan
-        // case .cat:       return .systemOrange
-        // case .dog:       return .systemBrown
-        // case .spider:    return .darkGray
-        // case .fish:      return .systemBlue
-        // case .snake:     return .systemGreen
-        // case .frog:      return .systemMint
-        // case .butterfly: return .systemPurple
-        // case .rabbit:    return .systemPink
         case .unknown:   return .systemIndigo
         }
     }

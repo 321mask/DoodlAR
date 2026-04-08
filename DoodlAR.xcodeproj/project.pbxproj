@@ -30,6 +30,7 @@
 		B785C1600D7AB44C15EEE8C5 /* simd+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866A0191E05993ED2CF2C26F /* simd+Extensions.swift */; };
 		B9D373F2CF851187768C0CBA /* CreatureType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE1C451F513C40BF1FECDFD /* CreatureType.swift */; };
 		C1AF84B44C8D892912C64BD5 /* DoodlARError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46B3650AC7DA4B044077E6 /* DoodlARError.swift */; };
+		C4B3DC3E59694B602FC111CC /* TapCatcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4499B74DBA7F3EA5C777ADC9 /* TapCatcherView.swift */; };
 		D2C041318C689FB15B422EDA /* PaperDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29F33A92D132E5C0CD45A654 /* PaperDetector.swift */; };
 		D3BA45E3EBE4329CBD2D4A86 /* SketchClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EE1A172393E9BF00339B557 /* SketchClassifier.swift */; };
 		D9A9F8DCBBB6B337788D6280 /* DetectionPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23B8D1AF8CB9080CC20B905B /* DetectionPipeline.swift */; };
@@ -74,6 +75,7 @@
 		2CDFC403AB956CF596D44B3B /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
 		3FE1C451F513C40BF1FECDFD /* CreatureType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatureType.swift; sourceTree = "<group>"; };
 		427AB2E977F3352693FE211A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		4499B74DBA7F3EA5C777ADC9 /* TapCatcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapCatcherView.swift; sourceTree = "<group>"; };
 		48A8DD89FEAC2936C01B03E4 /* SpatialAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialAudioService.swift; sourceTree = "<group>"; };
 		4E46B3650AC7DA4B044077E6 /* DoodlARError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoodlARError.swift; sourceTree = "<group>"; };
 		5356AAD86E591F9708B9434B /* SceneManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneManager.swift; sourceTree = "<group>"; };
@@ -165,6 +167,7 @@
 				9B6B9D0E2F21890A173526C9 /* CreatureNavigator.swift */,
 				93478A1A3C4C957294184630 /* CreatureSpawner.swift */,
 				5356AAD86E591F9708B9434B /* SceneManager.swift */,
+				4499B74DBA7F3EA5C777ADC9 /* TapCatcherView.swift */,
 			);
 			path = ARExperience;
 			sourceTree = "<group>";
@@ -392,6 +395,7 @@
 				5FBF063FE54E04A205D86142 /* SketchClassifierModel.mlmodel in Sources */,
 				EB39D1F7FAE22BB0916DB1F7 /* SketchFeatures.swift in Sources */,
 				FE40EDC7CD0C73EBF4BE1E82 /* SpatialAudioService.swift in Sources */,
+				C4B3DC3E59694B602FC111CC /* TapCatcherView.swift in Sources */,
 				A2319681D39CD91D6F797BF5 /* VisionService.swift in Sources */,
 				B785C1600D7AB44C15EEE8C5 /* simd+Extensions.swift in Sources */,
 			);

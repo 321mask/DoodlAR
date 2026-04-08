@@ -74,9 +74,10 @@ final class CreatureNavigator {
         let angle = Float.random(in: 0...(2 * .pi))
         let distance = Float.random(in: wanderRadius)
         let offset = SIMD3<Float>(cos(angle) * distance, 0, sin(angle) * distance)
+        // [MODIFICA PER PERFORMANCE/STABILITÀ] Raggio abbassato a +0.3 anziché +1.0 per ottimizzare
         let probeOrigin = SIMD3<Float>(
             anchorWorldPos.x + offset.x,
-            anchorWorldPos.y + 1.0, // cast from above
+            anchorWorldPos.y + 0.3, 
             anchorWorldPos.z + offset.z
         )
 
@@ -84,13 +85,21 @@ final class CreatureNavigator {
         let results = arView.scene.raycast(
             origin: probeOrigin,
             direction: SIMD3(0, -1, 0),
-            length: 2.0,
+            length: 1.0, // Limitato a 1 metro per performance
             query: .nearest,
             mask: .all
         )
 
         guard let hit = results.first else {
             Logger.ar.debug("Navigator raycast missed — no mesh surface found")
+            return nil
+        }
+        
+        // [MODIFICA] Ledge Detection (Evita che cada dal tavolo)
+        // Se il pavimento/target trovato differisce dalla scrivania attuale per più di 5cm di altezza
+        let altitudeDelta = anchorWorldPos.y - hit.position.y
+        if abs(altitudeDelta) > 0.05 {
+            Logger.ar.debug("Ostacolo / Bordo tavolo rilevato (Dislivello > 5cm). Target rifiutato.")
             return nil
         }
 
