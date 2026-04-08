@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="24883" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina12_9" orientation="landscape" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24877"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="1366" height="1024"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="●" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="48m-98-6Mx">
+                                <rect key="frame" x="-134" y="-120" width="348" height="348"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="300"/>
+                                <color key="textColor" red="0.32941176469999999" green="0.90980392159999998" blue="0.83137254900000003" alpha="0.18" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="●" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="riM-cY-rw4">
+                                <rect key="frame" x="1148" y="767" width="278" height="278"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="240"/>
+                                <color key="textColor" red="1" green="0.69019607839999998" blue="0.31764705880000002" alpha="0.16" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="24" translatesAutoresizingMaskIntoConstraints="NO" id="Tpw-L1-9c1">
+                                <rect key="frame" x="443" y="303" width="481" height="419"/>
+                                <subviews>
+                                    <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="14" translatesAutoresizingMaskIntoConstraints="NO" id="9TO-VN-IZT">
+                                        <rect key="frame" x="0.0" y="0.0" width="481" height="144"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="DoodlAR" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="GmT-3j-rxH">
+                                                <rect key="frame" x="0.0" y="0.0" width="481" height="66"/>
+                                                <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="54"/>
+                                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Draw. Scan. Alive." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3Eu-hX-IoS">
+                                                <rect key="frame" x="0.0" y="80" width="481" height="30"/>
+                                                <fontDescription key="fontDescription" type="roundedSystem" weight="semibold" pointSize="26"/>
+                                                <color key="textColor" white="1" alpha="0.77999999999999992" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="A magical world for your drawings" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eov-R9-Cwb">
+                                                <rect key="frame" x="0.0" y="124" width="481" height="20"/>
+                                                <fontDescription key="fontDescription" type="roundedSystem" weight="medium" pointSize="18"/>
+                                                <color key="textColor" white="1" alpha="0.57999999999999996" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                        </subviews>
+                                    </stackView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="✏︎   ◎   ✦" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="OSk-j3-EYD">
+                                        <rect key="frame" x="0.0" y="168" width="481" height="109"/>
+                                        <fontDescription key="fontDescription" type="roundedSystem" weight="bold" pointSize="90"/>
+                                        <color key="textColor" white="1" alpha="0.96" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <stackView opaque="NO" contentMode="scaleToFill" axis="horizontal" distribution="fillEqually" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" id="hBn-Ei-Bj3">
+                                        <rect key="frame" x="0.0" y="301" width="481" height="34"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Draw" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MxY-wO-KbI">
+                                                <rect key="frame" x="0.0" y="0.0" width="150" height="34"/>
+                                                <fontDescription key="fontDescription" type="roundedSystem" weight="heavy" pointSize="24"/>
+                                                <color key="textColor" red="1" green="0.82352941179999999" blue="0.45882352939999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Scan" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="sMz-Ag-09W">
+                                                <rect key="frame" x="166" y="0.0" width="149" height="34"/>
+                                                <fontDescription key="fontDescription" type="roundedSystem" weight="heavy" pointSize="24"/>
+                                                <color key="textColor" red="0.48627450979999999" green="0.94117647059999996" blue="0.85490196079999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Alive" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7iq-DS-Xq2">
+                                                <rect key="frame" x="331" y="0.0" width="150" height="34"/>
+                                                <fontDescription key="fontDescription" type="roundedSystem" weight="heavy" pointSize="24"/>
+                                                <color key="textColor" red="1" green="0.65490196080000002" blue="0.33725490200000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                        </subviews>
+                                    </stackView>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="★" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2Ba-yf-L6x">
+                                        <rect key="frame" x="408" y="359" width="73" height="60"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="54"/>
+                                        <color key="textColor" red="1" green="0.84313725489999995" blue="0.48627450979999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
+                        <color key="backgroundColor" red="0.070588235289999994" green="0.1058823529" blue="0.27450980389999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="Tpw-L1-9c1" firstAttribute="centerX" secondItem="Bcu-3y-fUS" secondAttribute="centerX" id="1FQ-Gc-Zsv"/>
+                            <constraint firstItem="Tpw-L1-9c1" firstAttribute="centerY" secondItem="Bcu-3y-fUS" secondAttribute="centerY" id="Kvj-ic-Ppc"/>
+                            <constraint firstItem="riM-cY-rw4" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" constant="60" id="QyF-z2-zjB"/>
+                            <constraint firstItem="riM-cY-rw4" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" constant="52" id="SnY-Q1-ykn"/>
+                            <constraint firstItem="48m-98-6Mx" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" constant="-134" id="d0s-zQ-b2c"/>
+                            <constraint firstItem="48m-98-6Mx" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" constant="-120" id="p3N-uN-uev"/>
+                            <constraint firstItem="Tpw-L1-9c1" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="60" id="r2v-tz-YWS"/>
+                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Tpw-L1-9c1" secondAttribute="trailing" constant="60" id="zz1-Di-8w2"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="34" y="13"/>
+        </scene>
+    </scenes>
+</document>
