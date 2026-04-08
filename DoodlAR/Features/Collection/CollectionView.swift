@@ -44,6 +44,17 @@ struct CollectionView: View {
             }
             .navigationTitle("Collection")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(role: .destructive) {
+                        withAnimation {
+                            viewModel.clearCollection()
+                            arViewModel.creatureSpawner.clearScene()
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(.red)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }

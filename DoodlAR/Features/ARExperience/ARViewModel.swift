@@ -97,9 +97,30 @@ final class ARViewModel: NSObject, @unchecked Sendable {
     }
 
     /// Raycasts from the center of the screen.
+    /// Falls back to a position 40cm in front of the camera if ARKit can't detect a surface
+    /// (e.g. glass table or uniform surface).
     func raycastFromCenter() -> simd_float4x4? {
         let center = CGPoint(x: arView.bounds.midX, y: arView.bounds.midY)
-        return raycastFromPoint(center)
+        if let hit = raycastFromPoint(center) {
+            return hit
+        }
+
+        // Fallback: place 40cm in front of the camera on the horizontal plane
+        let cameraMatrix = arView.cameraTransform.matrix
+        var newTransform = matrix_identity_float4x4
+        let forwardZ = cameraMatrix.columns.2.z
+        let forwardX = cameraMatrix.columns.2.x
+        let length = sqrt(forwardX * forwardX + forwardZ * forwardZ)
+
+        if length > 0.001 {
+            newTransform.columns.3.x = cameraMatrix.columns.3.x - (forwardX / length) * 0.4
+            newTransform.columns.3.z = cameraMatrix.columns.3.z - (forwardZ / length) * 0.4
+            newTransform.columns.3.y = cameraMatrix.columns.3.y - 0.2
+        } else {
+            newTransform.columns.3 = cameraMatrix.columns.3
+            newTransform.columns.3.y -= 0.4
+        }
+        return newTransform
     }
 
     /// Spawns a creature at the given world position.

@@ -36,7 +36,13 @@ final class CollectionViewModel {
     }
 
     /// Adds a newly discovered creature to the collection and persists it.
+    /// Prevents duplicates based on CreatureType.
     func addCreature(_ creature: Creature) {
+        if creatures.contains(where: { $0.type == creature.type }) {
+            Logger.persistence.info("Creature \(creature.type.displayName) already in collection, ignoring duplicate.")
+            return
+        }
+
         creatures.insert(creature, at: 0)
 
         guard let modelContext else {
@@ -72,6 +78,19 @@ final class CollectionViewModel {
             }
         } catch {
             Logger.persistence.error("Failed to update nickname: \(error.localizedDescription)")
+        }
+    }
+
+    /// Clears the entire collection.
+    func clearCollection() {
+        creatures.removeAll()
+        guard let modelContext else { return }
+        do {
+            try modelContext.delete(model: PersistedCreature.self)
+            try modelContext.save()
+            Logger.persistence.info("Cleared entire collection")
+        } catch {
+            Logger.persistence.error("Failed to clear collection: \(error.localizedDescription)")
         }
     }
 
