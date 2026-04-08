@@ -532,8 +532,26 @@ final class CreatureSpawner {
 
     /// Attempts to load a 3D model for the given creature type.
     private func loadUSDZModel(for type: CreatureType, tintColors: [CGColor]) async -> Entity? {
+        let modelName = type.modelName
+
+        // Try loading by name first (works when file is at bundle root)
+        // Then fall back to explicit URL search (works for files in subdirectories)
         do {
-            let entity = try await ModelEntity.loadModel(named: "\(type.modelName).usdz")
+            let entity: ModelEntity
+            if let url = Bundle.main.url(forResource: modelName, withExtension: "usdz") {
+                Logger.ar.info("Found model URL: \(url.lastPathComponent)")
+                entity = try await ModelEntity.loadModel(contentsOf: url)
+            } else if let url = Bundle.main.url(forResource: modelName, withExtension: "usdc") {
+                Logger.ar.info("Found model URL (usdc): \(url.lastPathComponent)")
+                entity = try await ModelEntity.loadModel(contentsOf: url)
+            } else if let url = Bundle.main.url(forResource: modelName, withExtension: "usda") {
+                Logger.ar.info("Found model URL (usda): \(url.lastPathComponent)")
+                entity = try await ModelEntity.loadModel(contentsOf: url)
+            } else {
+                // Last resort: try the named loading API
+                Logger.ar.info("No bundle URL for '\(modelName)', trying loadModel(named:)")
+                entity = try await ModelEntity.loadModel(named: "\(modelName).usdz")
+            }
 
             // Per-type scale overrides for models that don't normalize well
             switch type {
@@ -551,10 +569,10 @@ final class CreatureSpawner {
             // Generate collision shapes for tap hit-testing
             entity.generateCollisionShapes(recursive: true)
 
-            Logger.ar.info("Loaded model: \(type.modelName)")
+            Logger.ar.info("Loaded model: \(modelName)")
             return entity
         } catch {
-            Logger.ar.warning("Model '\(type.modelName)' not found, using placeholder: \(error.localizedDescription)")
+            Logger.ar.warning("Model '\(modelName)' not found, using placeholder: \(error.localizedDescription)")
             return nil
         }
     }

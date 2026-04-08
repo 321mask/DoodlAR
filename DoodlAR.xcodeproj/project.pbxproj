@@ -291,6 +291,7 @@
 			buildConfigurationList = F8550AD09492651D6A22ADB5 /* Build configuration list for PBXNativeTarget "DoodlAR" */;
 			buildPhases = (
 				F15D110423AE1D4628ED4E6D /* Sources */,
+				3AC543C62F86D2B400827F34 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -357,6 +358,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3AC543C62F86D2B400827F34 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		56050663695342395CE6E1D5 /* Sources */ = {

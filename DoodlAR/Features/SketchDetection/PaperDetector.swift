@@ -11,7 +11,7 @@ actor PaperDetector {
     private let visionService: VisionService
 
     /// Number of consecutive frames a rectangle must be detected before it is considered stable.
-    private let stabilityThreshold = 5
+    private let stabilityThreshold = 3
 
     /// Maximum allowable distance between rectangle corners across frames to be considered "same" rectangle.
     private let cornerStabilityDistance: CGFloat = 0.05
@@ -24,6 +24,9 @@ actor PaperDetector {
 
     /// The most recent stable rectangle, or `nil` if not yet stable.
     private(set) var stableRectangle: DetectedRectangle?
+
+    /// The most recently detected rectangle (even before stability).
+    private(set) var lastSeenRectangle: DetectedRectangle?
 
     init(visionService: VisionService = VisionService()) {
         self.visionService = visionService
@@ -43,6 +46,7 @@ actor PaperDetector {
         let detection = try await visionService.detectRectangle(in: frame)
 
         if let detection {
+            lastSeenRectangle = detection
             addDetection(detection)
         } else {
             resetStability()
@@ -56,6 +60,7 @@ actor PaperDetector {
         recentDetections.removeAll()
         isStable = false
         stableRectangle = nil
+        lastSeenRectangle = nil
         Logger.vision.debug("Paper detector reset")
     }
 

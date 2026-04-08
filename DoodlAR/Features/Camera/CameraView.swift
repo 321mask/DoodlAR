@@ -206,36 +206,52 @@ struct CameraView: View {
     }
 
     private var detectedBar: some View {
-        HStack(spacing: 12) {
+        VStack(spacing: 10) {
             if let result = cameraViewModel.lastDetectionResult {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-                    .font(.title3)
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.title3)
 
-                Text("\(result.classificationResult.creatureType.displayName) Found!")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-            }
+                    Text("\(result.classificationResult.creatureType.displayName) Found!")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
 
-            Spacer()
+                    Spacer()
 
-            Button("Collect & Spawn") {
-                withAnimation(.spring(duration: 0.3)) {
-                    appState.spawnState = .triggerSpawn
+                    Text("\(Int(result.classificationResult.confidence * 100))%")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.green)
 
-            Button("Discard") {
-                Task {
+            HStack(spacing: 12) {
+                Button {
                     withAnimation(.spring(duration: 0.3)) {
-                        appState.spawnState = .idle
+                        appState.spawnState = .triggerSpawn
                     }
-                    await cameraViewModel.resetDetection()
+                } label: {
+                    Text("Collect & Spawn")
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+
+                Button {
+                    Task {
+                        withAnimation(.spring(duration: 0.3)) {
+                            appState.spawnState = .idle
+                        }
+                        await cameraViewModel.resetDetection()
+                    }
+                } label: {
+                    Text("Discard")
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         }
         .liquidGlassBar()
     }

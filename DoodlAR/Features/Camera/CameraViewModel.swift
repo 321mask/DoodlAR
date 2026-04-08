@@ -73,23 +73,34 @@ final class CameraViewModel {
         lastProcessedTime = now
 
         do {
-            let result = try await detectionPipeline.processFrame(frame)
+            let frameResult = try await detectionPipeline.processFrame(frame)
 
-            if let result {
-                detectedCorners = result.paperCorners
-                extractedSketchImage = result.normalizedSketchImage
+            // Always update paper overlay from the latest detection (even before stability)
+            if let corners = frameResult.paperCorners {
+                detectedCorners = corners
                 isPaperDetected = true
+            } else {
+                detectedCorners = nil
+                isPaperDetected = false
+            }
+
+            // Full pipeline result available
+            if let result = frameResult.detectionResult {
+                extractedSketchImage = result.normalizedSketchImage
                 lastDetectionResult = result
 
                 let name = result.classificationResult.creatureType.displayName
                 let pct = Int(result.classificationResult.confidence * 100)
                 guidanceMessage = "\(name) detected (\(pct)%)"
                 Logger.camera.info("Full pipeline result: \(name) at \(pct)%")
+            } else if frameResult.isPaperStable {
+                // Paper is stable but classification hasn't completed yet
+                guidanceMessage = "Processing your drawing..."
+            } else if frameResult.paperCorners != nil {
+                // Paper seen but not yet stable
+                guidanceMessage = "Hold steady..."
             } else {
-                // Paper detector hasn't stabilized yet — show scanning state
-                if !isPaperDetected {
-                    guidanceMessage = "Point your camera at your drawing"
-                }
+                guidanceMessage = "Point your camera at your drawing"
             }
         } catch {
             Logger.camera.error("Frame processing error: \(error.localizedDescription)")
