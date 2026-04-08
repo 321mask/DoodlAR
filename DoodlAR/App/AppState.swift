@@ -47,6 +47,28 @@ final class AppState {
     /// Toggled when an error occurs.
     var hapticError = false
 
+    // MARK: - Alive Creature
+
+    /// The type of the currently alive creature (set after spawn completes).
+    var aliveCreatureType: CreatureType?
+
+    /// Whether the dog walk animation is active (toggled by the walk button).
+    var isDogWalking = false
+
+    // MARK: - Scene Objects & Radial Menu
+
+    /// All creature/object types currently alive in the scene.
+    var sceneObjectTypes: Set<CreatureType> = []
+
+    /// Whether the radial menu is currently shown above the dog.
+    var isRadialMenuVisible = false
+
+    /// Screen position for the radial menu overlay.
+    var radialMenuScreenPosition: CGPoint?
+
+    /// The selected dog action from the radial menu (consumed by CameraView).
+    var selectedDogAction: DogAction?
+
     // MARK: - Audio
 
     /// Whether all spatial audio is muted.

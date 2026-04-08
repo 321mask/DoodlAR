@@ -39,8 +39,8 @@ struct PaperDetectorTests {
     }
 
     @Test func allCreatureTypesExist() {
-        // 10 known types + unknown
-        #expect(CreatureType.allCases.count == 11)
+        // 10 creature types + tent + baseball + unknown
+        #expect(CreatureType.allCases.count == 13)
     }
 
     // MARK: - ClassificationResult

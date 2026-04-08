@@ -61,6 +61,8 @@ struct DoodlARApp: App {
             )
 
             appState.hapticSpawn.toggle()
+            appState.aliveCreatureType = result.classificationResult.creatureType
+            appState.isDogWalking = false
             appState.spawnState = .alive(creatureID: UUID())
             Logger.ar.info("Spawn complete, creature alive")
         } catch {

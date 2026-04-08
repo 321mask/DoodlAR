@@ -13,6 +13,11 @@
 		27DEEEEC3ED7951504A20280 /* ClassificationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCFD960020971361C181E4C /* ClassificationResult.swift */; };
 		2973D7946E8E8B26C325CB45 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427AB2E977F3352693FE211A /* AppState.swift */; };
 		2A239B2F8972B1CBA7E495DB /* MLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2EBEECA8F33AD40744C071 /* MLService.swift */; };
+		3AC5439F2F8689B300827F34 /* DogAnimationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC5439E2F8689B300827F34 /* DogAnimationController.swift */; };
+		3AC543A32F868FFE00827F34 /* DogAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC543A22F868FFE00827F34 /* DogAction.swift */; };
+		3AC543A52F86909A00827F34 /* DogInteractionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC543A42F86909A00827F34 /* DogInteractionController.swift */; };
+		3AC543A72F86909A00827F34 /* BaseballInteractionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC543A62F86909A00827F34 /* BaseballInteractionController.swift */; };
+		3AC543A92F8690C400827F34 /* RadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC543A82F8690C400827F34 /* RadialMenuView.swift */; };
 		59B1CEF0AC8B515A50320DD0 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CDFC403AB956CF596D44B3B /* CameraViewModel.swift */; };
 		5AF0D9724120C5CC6FF19B9A /* Creature.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE91CBA58EF39222485E0527 /* Creature.swift */; };
 		5CA004E0640471A17CE08890 /* Logger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19892E0A5977783B7C38062D /* Logger+Extensions.swift */; };
@@ -55,7 +60,7 @@
 		044D6567CAAA76E0CD118425 /* simdExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = simdExtensionsTests.swift; sourceTree = "<group>"; };
 		094ACD0E1D4170C524BA3286 /* DoodlARApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoodlARApp.swift; sourceTree = "<group>"; };
 		0EA2CD6E8F6F90B322DA8FE0 /* PaperDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperDetectorTests.swift; sourceTree = "<group>"; };
-		15A77026768A2D7243D9FE96 /* DoodlARTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = DoodlARTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		15A77026768A2D7243D9FE96 /* DoodlARTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DoodlARTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		15D3FC64CA54039BC9DE9C14 /* SketchClassifierModel.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = SketchClassifierModel.mlmodel; sourceTree = "<group>"; };
 		19892E0A5977783B7C38062D /* Logger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Logger+Extensions.swift"; sourceTree = "<group>"; };
 		1D07F91BC2E0515C6003EB73 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -69,6 +74,11 @@
 		29F33A92D132E5C0CD45A654 /* PaperDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperDetector.swift; sourceTree = "<group>"; };
 		2CCFD960020971361C181E4C /* ClassificationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassificationResult.swift; sourceTree = "<group>"; };
 		2CDFC403AB956CF596D44B3B /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
+		3AC5439E2F8689B300827F34 /* DogAnimationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogAnimationController.swift; sourceTree = "<group>"; };
+		3AC543A22F868FFE00827F34 /* DogAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogAction.swift; sourceTree = "<group>"; };
+		3AC543A42F86909A00827F34 /* DogInteractionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogInteractionController.swift; sourceTree = "<group>"; };
+		3AC543A62F86909A00827F34 /* BaseballInteractionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseballInteractionController.swift; sourceTree = "<group>"; };
+		3AC543A82F8690C400827F34 /* RadialMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuView.swift; sourceTree = "<group>"; };
 		3FE1C451F513C40BF1FECDFD /* CreatureType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatureType.swift; sourceTree = "<group>"; };
 		427AB2E977F3352693FE211A /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		48A8DD89FEAC2936C01B03E4 /* SpatialAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialAudioService.swift; sourceTree = "<group>"; };
@@ -89,6 +99,14 @@
 		ECCE9D7EE8A023F263469B38 /* SketchFeatures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchFeatures.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3AC543992F86863A00827F34 /* 3DModels */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = 3DModels;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXGroup section */
 		1B77C35B4FA6F224A05C299A /* Audio */ = {
 			isa = PBXGroup;
@@ -105,6 +123,7 @@
 				3FE1C451F513C40BF1FECDFD /* CreatureType.swift */,
 				C35607172CDF01545056780B /* PersistedCreature.swift */,
 				ECCE9D7EE8A023F263469B38 /* SketchFeatures.swift */,
+				3AC543A22F868FFE00827F34 /* DogAction.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -136,6 +155,7 @@
 		673264AE320296546E5EAA08 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				3AC543992F86863A00827F34 /* 3DModels */,
 				15D3FC64CA54039BC9DE9C14 /* SketchClassifierModel.mlmodel */,
 				1B77C35B4FA6F224A05C299A /* Audio */,
 				DE1BDFEE0C0B755EE8CB073D /* Models */,
@@ -161,6 +181,9 @@
 				9B6B9D0E2F21890A173526C9 /* CreatureNavigator.swift */,
 				93478A1A3C4C957294184630 /* CreatureSpawner.swift */,
 				5356AAD86E591F9708B9434B /* SceneManager.swift */,
+				3AC5439E2F8689B300827F34 /* DogAnimationController.swift */,
+				3AC543A42F86909A00827F34 /* DogInteractionController.swift */,
+				3AC543A62F86909A00827F34 /* BaseballInteractionController.swift */,
 			);
 			path = ARExperience;
 			sourceTree = "<group>";
@@ -210,6 +233,7 @@
 			children = (
 				24543AB7A94ECAD57BBE495C /* CameraView.swift */,
 				2CDFC403AB956CF596D44B3B /* CameraViewModel.swift */,
+				3AC543A82F8690C400827F34 /* RadialMenuView.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
@@ -271,6 +295,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3AC543992F86863A00827F34 /* 3DModels */,
 			);
 			name = DoodlAR;
 			packageProductDependencies = (
@@ -350,11 +377,13 @@
 				A23E64AFE33B22931BCD3BF5 /* ARViewModel.swift in Sources */,
 				2973D7946E8E8B26C325CB45 /* AppState.swift in Sources */,
 				60D6FF5AC4796D762B7342ED /* CIImage+Extensions.swift in Sources */,
+				3AC543A72F86909A00827F34 /* BaseballInteractionController.swift in Sources */,
 				853E89D2097CBA73A76B546E /* CameraView.swift in Sources */,
 				59B1CEF0AC8B515A50320DD0 /* CameraViewModel.swift in Sources */,
 				27DEEEEC3ED7951504A20280 /* ClassificationResult.swift in Sources */,
 				251964E5236A775733922CA2 /* CollectionView.swift in Sources */,
 				FCB91C59F0C0B724A737C89C /* CollectionViewModel.swift in Sources */,
+				3AC5439F2F8689B300827F34 /* DogAnimationController.swift in Sources */,
 				5AF0D9724120C5CC6FF19B9A /* Creature.swift in Sources */,
 				EAD0737F2B06BE4CFD56442F /* CreatureNavigator.swift in Sources */,
 				15109C4BB81D824CE42E6100 /* CreatureSpawner.swift in Sources */,
@@ -368,6 +397,7 @@
 				D2C041318C689FB15B422EDA /* PaperDetector.swift in Sources */,
 				764A10A7A76979896BDFA496 /* PersistedCreature.swift in Sources */,
 				81DEC719A36A928FD416C7C1 /* SceneManager.swift in Sources */,
+				3AC543A52F86909A00827F34 /* DogInteractionController.swift in Sources */,
 				E7BDB23E13271041D165E96B /* SendableFrame.swift in Sources */,
 				D3BA45E3EBE4329CBD2D4A86 /* SketchClassifier.swift in Sources */,
 				5FBF063FE54E04A205D86142 /* SketchClassifierModel.mlmodel in Sources */,
@@ -375,6 +405,8 @@
 				FE40EDC7CD0C73EBF4BE1E82 /* SpatialAudioService.swift in Sources */,
 				A2319681D39CD91D6F797BF5 /* VisionService.swift in Sources */,
 				B785C1600D7AB44C15EEE8C5 /* simd+Extensions.swift in Sources */,
+				3AC543A92F8690C400827F34 /* RadialMenuView.swift in Sources */,
+				3AC543A32F868FFE00827F34 /* DogAction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,6 +425,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = F6KJ6KKPZT;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -475,6 +508,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = F6KJ6KKPZT;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

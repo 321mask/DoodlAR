@@ -29,6 +29,21 @@ struct CreatureTests {
         #expect(CreatureType.from(label: "") == .unknown)
     }
 
+    @Test func tentAndBaseballModelNames() {
+        #expect(CreatureType.tent.modelName == "dog_tent")
+        #expect(CreatureType.baseball.modelName == "dog_baseball")
+        // Regular creatures still use the old pattern
+        #expect(CreatureType.dog.modelName == "creature_dog")
+    }
+
+    @Test func staticObjectProperty() {
+        #expect(CreatureType.tent.isStaticObject == true)
+        #expect(CreatureType.baseball.isStaticObject == true)
+        #expect(CreatureType.dog.isStaticObject == false)
+        #expect(CreatureType.dragon.isStaticObject == false)
+        #expect(CreatureType.unknown.isStaticObject == false)
+    }
+
     // MARK: - ClassificationResult
 
     @Test func confidenceThresholdApplication() {

@@ -9,6 +9,13 @@ import os
 /// 1. Anchor a flat quad textured with the sketch photo at the paper's world position
 /// 2. Morph from flat sketch to 3D model over ~1.5 seconds with particle burst
 /// 3. Creature becomes alive — bobs, responds to tap gestures
+/// Tracks a spawned entity along with its type and anchor.
+struct SpawnedEntity {
+    let entity: Entity
+    let anchor: AnchorEntity
+    let type: CreatureType
+}
+
 @MainActor
 final class CreatureSpawner {
     private let arView: ARView
@@ -16,11 +23,26 @@ final class CreatureSpawner {
     /// Cache of loaded USDZ/placeholder entities by creature type.
     private var entityCache: [CreatureType: Entity] = [:]
 
-    /// Currently alive creature entities for gesture handling.
-    private(set) var aliveCreatures: [Entity] = []
+    /// All spawned entities in the scene with their type and anchor.
+    private(set) var spawnedEntities: [SpawnedEntity] = []
+
+    /// Backward-compatible accessor for existing code that iterates entities.
+    var aliveCreatures: [Entity] { spawnedEntities.map(\.entity) }
+
+    /// All creature/object types currently alive in the scene.
+    var aliveTypes: Set<CreatureType> { Set(spawnedEntities.map(\.type)) }
 
     /// Active navigators for creatures walking on the mesh.
     private var navigators: [ObjectIdentifier: CreatureNavigator] = [:]
+
+    /// Animation controller for dog creatures with multi-animation USDA files.
+    private(set) var dogAnimationController: DogAnimationController?
+
+    /// Handles dog-to-object interactions (walk to tent, chase ball).
+    private(set) var dogInteractionController: DogInteractionController?
+
+    /// Handles baseball throwing and placement.
+    private(set) var baseballInteractionController: BaseballInteractionController?
 
     /// Spatial audio service for creature sounds.
     let audioService = SpatialAudioService()
@@ -31,9 +53,12 @@ final class CreatureSpawner {
     /// Reference to AppState for mute status (set by the view model).
     weak var appState: AppState?
 
+    /// Tracks which entity the long-press or pan gesture started on (for baseball interactions).
+    private var activePanTarget: SpawnedEntity?
+
     init(arView: ARView) {
         self.arView = arView
-        setupTapGesture()
+        setupGestureRecognizers()
     }
 
     // MARK: - Spawn Sequence
@@ -58,7 +83,21 @@ final class CreatureSpawner {
         try await Task.sleep(for: .milliseconds(600))
 
         // Phase 2: Morph transition
-        let creatureEntity = await createCreatureEntity(for: creatureType, tintColors: features.dominantColors)
+        let isDog = creatureType == .dog
+        let creatureEntity: Entity
+
+        if isDog {
+            // Load the dog model via the animation controller (extracts all 4 animations)
+            let controller = DogAnimationController(arView: arView)
+            creatureEntity = try await controller.loadModel()
+            normalizeScale(of: creatureEntity, targetSize: 0.1)
+            creatureEntity.generateCollisionShapes(recursive: true)
+            applyTint(to: creatureEntity, colors: features.dominantColors, type: creatureType)
+            dogAnimationController = controller
+        } else {
+            creatureEntity = await createCreatureEntity(for: creatureType, tintColors: features.dominantColors)
+        }
+
         creatureEntity.scale = SIMD3(repeating: 0.001) // Start invisible
         creatureEntity.position.y = 0.0
         anchor.addChild(creatureEntity)
@@ -107,19 +146,44 @@ final class CreatureSpawner {
             particleEntity.removeFromParent()
         }
 
-        // Phase 3: Creature alive — start idle animation loop
-        startIdleAnimationLoop(for: creatureEntity, anchor: anchor)
-        aliveCreatures.append(creatureEntity)
+        // Phase 3: Creature alive
+        if isDog, let controller = dogAnimationController {
+            // Play the baked spawn animation, which auto-transitions to idle loop
+            controller.playSpawn()
 
-        // Start ambient audio loop
-        audioService.startAmbientLoop(
-            on: creatureEntity,
-            creatureType: creatureType,
-            isMuted: isMuted
-        )
+            // Configure the dog interaction controller for tent/ball commands
+            let interactionController = DogInteractionController(arView: arView)
+            interactionController.configure(
+                dogAnchor: anchor,
+                dogEntity: creatureEntity,
+                animationController: controller
+            )
+            dogInteractionController = interactionController
+        } else if creatureType.isStaticObject {
+            // Static objects: no idle animation, no navigator, no ambient audio
+            if creatureType == .baseball {
+                let controller = BaseballInteractionController(arView: arView)
+                controller.configure(entity: creatureEntity, anchor: anchor)
+                baseballInteractionController = controller
+            }
+        } else {
+            startIdleAnimationLoop(for: creatureEntity, anchor: anchor)
+        }
 
-        // Start mesh navigation on LiDAR devices
-        if isSceneReconstructionAvailable {
+        spawnedEntities.append(SpawnedEntity(entity: creatureEntity, anchor: anchor, type: creatureType))
+        appState?.sceneObjectTypes.insert(creatureType)
+
+        // Start ambient audio loop (skip for static objects)
+        if !creatureType.isStaticObject {
+            audioService.startAmbientLoop(
+                on: creatureEntity,
+                creatureType: creatureType,
+                isMuted: isMuted
+            )
+        }
+
+        // Start mesh navigation on LiDAR devices (skip for static objects and dogs with baked anims)
+        if isSceneReconstructionAvailable && !creatureType.isStaticObject && !isDog {
             let navigator = CreatureNavigator(anchor: anchor, entity: creatureEntity, arView: arView)
             navigator.start()
             navigators[ObjectIdentifier(creatureEntity)] = navigator
@@ -138,12 +202,76 @@ final class CreatureSpawner {
         }
         navigators.removeAll()
 
+        // Clean up controllers
+        dogAnimationController?.cleanup()
+        dogAnimationController = nil
+        dogInteractionController?.cleanup()
+        dogInteractionController = nil
+        baseballInteractionController?.cleanup()
+        baseballInteractionController = nil
+
         // Stop all audio
         audioService.stopAllAudio()
 
         arView.scene.anchors.removeAll()
-        aliveCreatures.removeAll()
+        spawnedEntities.removeAll()
+        appState?.sceneObjectTypes.removeAll()
         Logger.ar.info("Scene cleared")
+    }
+
+    // MARK: - Dog Walk Control
+
+    /// Starts the dog walk animation loop.
+    func startDogWalk() {
+        dogAnimationController?.playWalk()
+    }
+
+    /// Stops the dog walk animation and returns to idle.
+    func stopDogWalk() {
+        dogAnimationController?.stopWalk()
+    }
+
+    // MARK: - Dog Actions
+
+    /// Executes a dog action from the radial menu (go to tent, chase ball).
+    func executeDogAction(_ action: DogAction) {
+        guard let interactionController = dogInteractionController else { return }
+
+        // Stop random wandering navigator for the dog
+        if let dogSpawn = spawnedEntity(ofType: .dog) {
+            navigators[ObjectIdentifier(dogSpawn.entity)]?.stop()
+        }
+
+        switch action {
+        case .goToTent:
+            guard let tentSpawn = spawnedEntity(ofType: .tent) else { return }
+            let tentPos = tentSpawn.anchor.position(relativeTo: nil)
+            interactionController.goToTent(tentWorldPosition: tentPos)
+
+        case .chaseBall:
+            guard let ballSpawn = spawnedEntity(ofType: .baseball) else { return }
+            let ballPos = ballSpawn.anchor.position(relativeTo: nil)
+            interactionController.chaseBall(ballWorldPosition: ballPos)
+        }
+    }
+
+    // MARK: - Entity Lookup
+
+    /// Returns the first spawned entity matching the given type.
+    func spawnedEntity(ofType type: CreatureType) -> SpawnedEntity? {
+        spawnedEntities.first(where: { $0.type == type })
+    }
+
+    /// Walks the parent chain from a hit entity to find which spawned entity was hit.
+    private func findSpawnedEntity(from hitEntity: Entity) -> SpawnedEntity? {
+        var target: Entity? = hitEntity
+        while let entity = target {
+            if let spawned = spawnedEntities.first(where: { $0.entity === entity }) {
+                return spawned
+            }
+            target = entity.parent
+        }
+        return nil
     }
 
     // MARK: - Particle Effects
@@ -222,40 +350,134 @@ final class CreatureSpawner {
         }
     }
 
-    // MARK: - Tap Gesture
+    // MARK: - Gesture Recognizers
 
-    /// Sets up a tap gesture recognizer on the AR view for creature interaction.
-    private func setupTapGesture() {
+    /// Sets up tap, long-press, and pan gesture recognizers on the AR view.
+    private func setupGestureRecognizers() {
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPress.minimumPressDuration = 0.5
+
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+
+        // Tap should fail if long press is recognized (prevents conflicts)
+        tap.require(toFail: longPress)
+
         arView.addGestureRecognizer(tap)
+        arView.addGestureRecognizer(longPress)
+        arView.addGestureRecognizer(pan)
     }
 
     /// Handles a tap on the AR view — if it hits a creature, play a reaction.
     @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
         let location = recognizer.location(in: arView)
 
+        // Dismiss radial menu on any tap
+        if appState?.isRadialMenuVisible == true {
+            appState?.isRadialMenuVisible = false
+            return
+        }
+
         guard let hitEntity = arView.entity(at: location) else { return }
 
-        // Check if the tapped entity (or its parent) is one of our alive creatures
-        var target: Entity? = hitEntity
-        while let entity = target {
-            if aliveCreatures.contains(where: { $0 === entity }) {
-                playTapReaction(on: entity)
-                return
-            }
-            target = entity.parent
+        if let spawned = findSpawnedEntity(from: hitEntity) {
+            // Don't play tap reaction on static objects
+            guard !spawned.type.isStaticObject else { return }
+            playTapReaction(on: spawned.entity)
         }
     }
 
-    /// Plays a bounce reaction when a creature is tapped.
+    /// Handles long-press: dog → show radial menu, baseball → enter hold-to-place mode.
+    @objc private func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {
+        let location = recognizer.location(in: arView)
+
+        switch recognizer.state {
+        case .began:
+            guard let hitEntity = arView.entity(at: location),
+                  let spawned = findSpawnedEntity(from: hitEntity) else { return }
+
+            if spawned.type == .dog {
+                showRadialMenu(for: spawned.entity)
+            } else if spawned.type == .baseball {
+                baseballInteractionController?.beginHold(at: location)
+            }
+
+        case .changed:
+            baseballInteractionController?.updateHold(at: location)
+
+        case .ended, .cancelled:
+            baseballInteractionController?.endHold()
+
+        default:
+            break
+        }
+    }
+
+    /// Handles pan gesture on the baseball for swipe-to-throw.
+    @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
+        let location = recognizer.location(in: arView)
+
+        switch recognizer.state {
+        case .began:
+            guard let hitEntity = arView.entity(at: location),
+                  let spawned = findSpawnedEntity(from: hitEntity),
+                  spawned.type == .baseball else {
+                activePanTarget = nil
+                return
+            }
+            activePanTarget = spawned
+            baseballInteractionController?.beginPan(at: location)
+
+        case .changed:
+            guard activePanTarget != nil else { return }
+            baseballInteractionController?.updatePan(at: location)
+
+        case .ended:
+            guard activePanTarget != nil else { return }
+            let velocity = recognizer.velocity(in: arView)
+            baseballInteractionController?.endPan(at: location, velocity: velocity)
+            activePanTarget = nil
+
+        case .cancelled:
+            baseballInteractionController?.cancelPan()
+            activePanTarget = nil
+
+        default:
+            break
+        }
+    }
+
+    /// Shows the floating radial menu above the dog.
+    private func showRadialMenu(for dogEntity: Entity) {
+        let worldPos = dogEntity.position(relativeTo: nil)
+        guard let screenPoint = arView.project(worldPos) else { return }
+
+        // Only show interactions for objects in the scene (excluding the dog itself)
+        let availableTypes = aliveTypes.subtracting([.dog, .unknown])
+        guard !availableTypes.isEmpty else { return }
+
+        appState?.radialMenuScreenPosition = screenPoint
+        appState?.sceneObjectTypes = aliveTypes
+        appState?.isRadialMenuVisible = true
+    }
+
+    /// Plays a reaction when a creature is tapped.
     private func playTapReaction(on entity: Entity) {
         Logger.ar.debug("Creature tapped — playing reaction")
-
-        guard let parent = entity.parent else { return }
 
         // Play tap sound
         let isMuted = appState?.isMuted ?? false
         audioService.playTapSound(on: entity, isMuted: isMuted)
+
+        // Use baked tap_react animation for dogs
+        if let controller = dogAnimationController, controller.entity === entity {
+            controller.playTapReact()
+            return
+        }
+
+        // Fallback bounce animation for other creature types
+        guard let parent = entity.parent else { return }
 
         let currentTransform = entity.transform
         let jumpHeight: Float = 0.04
@@ -448,6 +670,8 @@ final class CreatureSpawner {
         case .frog:      return .systemMint
         case .butterfly: return .systemPurple
         case .rabbit:    return .systemPink
+        case .tent:      return .systemBrown
+        case .baseball:  return .white
         case .unknown:   return .systemIndigo
         }
     }

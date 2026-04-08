@@ -26,12 +26,34 @@ struct CameraView: View {
                 PaperOverlayView(corners: corners)
             }
 
+            // Radial menu overlay (long-press on dog)
+            if appState.isRadialMenuVisible, let menuPos = appState.radialMenuScreenPosition {
+                RadialMenuView(
+                    position: menuPos,
+                    availableActions: radialMenuActions,
+                    onSelect: { action in
+                        appState.selectedDogAction = action
+                        appState.isRadialMenuVisible = false
+                    },
+                    onDismiss: {
+                        appState.isRadialMenuVisible = false
+                    }
+                )
+                .transition(.opacity)
+            }
+
             // UI chrome
             VStack {
                 topBar
                 Spacer()
                 debugPreview
                 bottomBar
+            }
+        }
+        .onChange(of: appState.selectedDogAction) { _, action in
+            if let action {
+                arViewModel.creatureSpawner.executeDogAction(action)
+                appState.selectedDogAction = nil
             }
         }
         .task {
@@ -204,6 +226,24 @@ struct CameraView: View {
 
             Spacer()
 
+            // Walk toggle for dog creatures
+            if appState.aliveCreatureType == .dog {
+                Button {
+                    appState.isDogWalking.toggle()
+                    if appState.isDogWalking {
+                        arViewModel.creatureSpawner.startDogWalk()
+                    } else {
+                        arViewModel.creatureSpawner.stopDogWalk()
+                    }
+                } label: {
+                    Image(systemName: appState.isDogWalking ? "figure.walk.circle.fill" : "figure.walk.circle")
+                        .font(.title3)
+                        .contentTransition(.symbolEffect(.replace))
+                }
+                .buttonStyle(.bordered)
+                .tint(appState.isDogWalking ? .orange : nil)
+            }
+
             Button("Collect") {
                 withAnimation(.spring(duration: 0.3)) {
                     addToCollection()
@@ -215,6 +255,8 @@ struct CameraView: View {
             Button("New Scan") {
                 Task {
                     withAnimation(.spring(duration: 0.3)) {
+                        appState.aliveCreatureType = nil
+                        appState.isDogWalking = false
                         appState.spawnState = .idle
                     }
                     await cameraViewModel.resetDetection()
@@ -247,6 +289,16 @@ struct CameraView: View {
             .buttonStyle(.bordered)
         }
         .liquidGlassBar()
+    }
+
+    // MARK: - Radial Menu
+
+    /// Actions available for the dog based on objects currently in the scene.
+    private var radialMenuActions: [DogAction] {
+        var actions: [DogAction] = []
+        if appState.sceneObjectTypes.contains(.tent) { actions.append(.goToTent) }
+        if appState.sceneObjectTypes.contains(.baseball) { actions.append(.chaseBall) }
+        return actions
     }
 
     // MARK: - Actions
