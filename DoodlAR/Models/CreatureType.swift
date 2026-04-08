@@ -14,6 +14,8 @@ enum CreatureType: String, CaseIterable, Codable, Sendable {
     case rabbit
     case tent
     case baseball
+    case apple
+    case banana
     case unknown // mystery creature fallback
 
     /// Filename of the 3D model (without extension).

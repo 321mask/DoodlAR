@@ -64,7 +64,7 @@ struct CameraView: View {
             await cameraViewModel.loadModel()
         }
         .sheet(isPresented: $appState.isCollectionPresented) {
-            CollectionView(viewModel: collectionViewModel)
+            CollectionView(viewModel: collectionViewModel, arViewModel: arViewModel)
         }
         .sensoryFeedback(.impact(flexibility: .soft), trigger: cameraViewModel.isPaperDetected)
         .sensoryFeedback(.success, trigger: appState.hapticClassification)
@@ -153,7 +153,11 @@ struct CameraView: View {
             scanningBar
                 .transition(.move(edge: .bottom).combined(with: .opacity))
 
-        case .detected, .classifying:
+        case .detected:
+            detectedBar
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+
+        case .classifying, .triggerSpawn:
             classifyingBar
                 .transition(.opacity)
 
@@ -201,6 +205,41 @@ struct CameraView: View {
         }
     }
 
+    private var detectedBar: some View {
+        HStack(spacing: 12) {
+            if let result = cameraViewModel.lastDetectionResult {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+                    .font(.title3)
+
+                Text("\(result.classificationResult.creatureType.displayName) Found!")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+            }
+
+            Spacer()
+
+            Button("Collect & Spawn") {
+                withAnimation(.spring(duration: 0.3)) {
+                    appState.spawnState = .triggerSpawn
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.green)
+
+            Button("Discard") {
+                Task {
+                    withAnimation(.spring(duration: 0.3)) {
+                        appState.spawnState = .idle
+                    }
+                    await cameraViewModel.resetDetection()
+                }
+            }
+            .buttonStyle(.bordered)
+        }
+        .liquidGlassBar()
+    }
+
     private var classifyingBar: some View {
         HStack(spacing: 12) {
             ProgressView()
@@ -215,10 +254,13 @@ struct CameraView: View {
     private var aliveBar: some View {
         HStack(spacing: 12) {
             if let result = cameraViewModel.lastDetectionResult {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(.yellow)
+                    .font(.title2)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(result.classificationResult.creatureType.displayName)
+                    Text("\(result.classificationResult.creatureType.displayName) is Alive!")
                         .font(.headline)
-                    Text("\(Int(result.classificationResult.confidence * 100))% match")
+                    Text("Auto-resetting scanner...")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -243,26 +285,6 @@ struct CameraView: View {
                 .buttonStyle(.bordered)
                 .tint(appState.isDogWalking ? .orange : nil)
             }
-
-            Button("Collect") {
-                withAnimation(.spring(duration: 0.3)) {
-                    addToCollection()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.green)
-
-            Button("New Scan") {
-                Task {
-                    withAnimation(.spring(duration: 0.3)) {
-                        appState.aliveCreatureType = nil
-                        appState.isDogWalking = false
-                        appState.spawnState = .idle
-                    }
-                    await cameraViewModel.resetDetection()
-                }
-            }
-            .buttonStyle(.bordered)
         }
         .liquidGlassBar()
     }

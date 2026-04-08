@@ -39,8 +39,8 @@ struct PaperDetectorTests {
     }
 
     @Test func allCreatureTypesExist() {
-        // 10 creature types + tent + baseball + unknown
-        #expect(CreatureType.allCases.count == 13)
+        // 10 creature types + tent + baseball + apple + banana + unknown
+        #expect(CreatureType.allCases.count == 15)
     }
 
     // MARK: - ClassificationResult
@@ -67,9 +67,13 @@ struct PaperDetectorTests {
     }
 
     @Test func creatureTypeFromLabelReturnsUnknownForUnrecognized() {
-        #expect(CreatureType.from(label: "apple") == .unknown)
-        #expect(CreatureType.from(label: "banana") == .unknown)
+        #expect(CreatureType.from(label: "unicorn") == .unknown)
         #expect(CreatureType.from(label: "") == .unknown)
+    }
+
+    @Test func creatureTypeFromLabelMatchesAppleBanana() {
+        #expect(CreatureType.from(label: "apple") == .apple)
+        #expect(CreatureType.from(label: "banana") == .banana)
     }
 
     // MARK: - SpawnState
@@ -78,11 +82,13 @@ struct PaperDetectorTests {
         let idle: SpawnState = .idle
         let scanning: SpawnState = .scanning
         let detected: SpawnState = .detected(paperPosition: .init(translation: .zero))
+        let triggerSpawn: SpawnState = .triggerSpawn
         let classifying: SpawnState = .classifying
 
         #expect(idle.shouldSpawn == false)
         #expect(scanning.shouldSpawn == false)
-        #expect(detected.shouldSpawn == true)
+        #expect(detected.shouldSpawn == false)
+        #expect(triggerSpawn.shouldSpawn == true)
         #expect(classifying.shouldSpawn == false)
     }
 }

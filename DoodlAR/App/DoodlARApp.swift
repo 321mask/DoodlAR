@@ -82,7 +82,7 @@ struct DoodlARApp: App {
 extension SpawnState {
     /// Whether the state indicates a spawn should begin.
     var shouldSpawn: Bool {
-        if case .detected = self { return true }
+        if case .triggerSpawn = self { return true }
         return false
     }
 }

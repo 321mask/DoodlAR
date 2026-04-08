@@ -3,6 +3,7 @@ import SwiftUI
 /// Gallery view showing all discovered creatures with their original sketch photos.
 struct CollectionView: View {
     @Bindable var viewModel: CollectionViewModel
+    let arViewModel: ARViewModel
     @Environment(\.dismiss) private var dismiss
 
     private let columns = [
@@ -115,5 +116,5 @@ struct CreatureCard: View {
 }
 
 #Preview {
-    CollectionView(viewModel: CollectionViewModel())
+    CollectionView(viewModel: CollectionViewModel(), arViewModel: ARViewModel())
 }

@@ -23,10 +23,13 @@ struct CreatureTests {
     }
 
     @Test func fromLabelUnknownStrings() {
-        #expect(CreatureType.from(label: "apple") == .unknown)
-        #expect(CreatureType.from(label: "banana") == .unknown)
         #expect(CreatureType.from(label: "unicorn") == .unknown)
         #expect(CreatureType.from(label: "") == .unknown)
+    }
+
+    @Test func fromLabelAppleBanana() {
+        #expect(CreatureType.from(label: "apple") == .apple)
+        #expect(CreatureType.from(label: "banana") == .banana)
     }
 
     @Test func tentAndBaseballModelNames() {
@@ -88,7 +91,8 @@ struct CreatureTests {
         let states: [(SpawnState, Bool)] = [
             (.idle, false),
             (.scanning, false),
-            (.detected(paperPosition: .init(translation: .zero)), true),
+            (.detected(paperPosition: .init(translation: .zero)), false),
+            (.triggerSpawn, true),
             (.classifying, false),
             (.morphing, false),
             (.alive(creatureID: UUID()), false),

@@ -126,10 +126,10 @@ final class CreatureSpawner {
             timingFunction: .easeIn
         )
 
-        // Grow creature from flat to full size
-        let targetScale = SIMD3<Float>(repeating: 0.1)
+        // Grow creature from flat to full size (use the scale assigned during loading)
+        let customTargetScale = creatureEntity.scale
         creatureEntity.move(
-            to: Transform(scale: targetScale, translation: SIMD3(0, 0.05, 0)),
+            to: Transform(scale: customTargetScale, translation: SIMD3(0, 0.05, 0)),
             relativeTo: anchor,
             duration: morphDuration,
             timingFunction: .easeOut
@@ -530,13 +530,20 @@ final class CreatureSpawner {
         return placeholder.clone(recursive: true)
     }
 
-    /// Attempts to load a USDZ model for the given creature type.
+    /// Attempts to load a 3D model for the given creature type.
     private func loadUSDZModel(for type: CreatureType, tintColors: [CGColor]) async -> Entity? {
         do {
-            let entity = try await Entity(named: type.modelName)
+            let entity = try await ModelEntity.loadModel(named: "\(type.modelName).usdz")
 
-            // Normalize scale so all creatures are roughly 0.1m
-            normalizeScale(of: entity, targetSize: 0.1)
+            // Per-type scale overrides for models that don't normalize well
+            switch type {
+            case .apple:
+                entity.scale = SIMD3(repeating: 0.005)
+            case .banana:
+                entity.scale = SIMD3(repeating: 0.02)
+            default:
+                normalizeScale(of: entity, targetSize: 0.1)
+            }
 
             // Apply tint from sketch's dominant colors
             applyTint(to: entity, colors: tintColors, type: type)
@@ -544,10 +551,10 @@ final class CreatureSpawner {
             // Generate collision shapes for tap hit-testing
             entity.generateCollisionShapes(recursive: true)
 
-            Logger.ar.info("Loaded USDZ model: \(type.modelName)")
+            Logger.ar.info("Loaded model: \(type.modelName)")
             return entity
         } catch {
-            Logger.ar.warning("USDZ '\(type.modelName)' not found, using placeholder: \(error.localizedDescription)")
+            Logger.ar.warning("Model '\(type.modelName)' not found, using placeholder: \(error.localizedDescription)")
             return nil
         }
     }
@@ -672,6 +679,8 @@ final class CreatureSpawner {
         case .rabbit:    return .systemPink
         case .tent:      return .systemBrown
         case .baseball:  return .white
+        case .apple:     return .systemRed
+        case .banana:    return .systemYellow
         case .unknown:   return .systemIndigo
         }
     }
