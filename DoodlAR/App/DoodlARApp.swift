@@ -65,6 +65,12 @@ struct DoodlARApp: App {
             appState.isDogWalking = false
             appState.spawnState = .alive(creatureID: UUID())
             Logger.ar.info("Spawn complete, creature alive")
+            
+            // [MODIFICA] Auto-reset to scan again after 2.5 seconds!
+            try? await Task.sleep(for: .seconds(2.5))
+            appState.spawnState = .idle
+            await cameraViewModel.resetDetection()
+            
         } catch {
             appState.hapticError.toggle()
             appState.spawnState = .failed(
