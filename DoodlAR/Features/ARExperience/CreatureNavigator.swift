@@ -74,9 +74,10 @@ final class CreatureNavigator {
         let angle = Float.random(in: 0...(2 * .pi))
         let distance = Float.random(in: wanderRadius)
         let offset = SIMD3<Float>(cos(angle) * distance, 0, sin(angle) * distance)
+        // Probe from slightly above to optimize raycast performance
         let probeOrigin = SIMD3<Float>(
             anchorWorldPos.x + offset.x,
-            anchorWorldPos.y + 1.0, // cast from above
+            anchorWorldPos.y + 0.3,
             anchorWorldPos.z + offset.z
         )
 
@@ -84,13 +85,20 @@ final class CreatureNavigator {
         let results = arView.scene.raycast(
             origin: probeOrigin,
             direction: SIMD3(0, -1, 0),
-            length: 2.0,
+            length: 1.0,
             query: .nearest,
             mask: .all
         )
 
         guard let hit = results.first else {
             Logger.ar.debug("Navigator raycast missed — no mesh surface found")
+            return nil
+        }
+
+        // Ledge detection: reject targets with >5cm altitude difference (prevents falling off table)
+        let altitudeDelta = anchorWorldPos.y - hit.position.y
+        if abs(altitudeDelta) > 0.05 {
+            Logger.ar.debug("Ledge detected (altitude delta > 5cm). Target rejected.")
             return nil
         }
 

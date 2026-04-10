@@ -147,6 +147,10 @@ final class CreatureSpawner {
         }
 
         // Phase 3: Creature alive
+        // Re-generate collision shapes now that the entity is at its final scale
+        // (the morph animation changed scale from 0.001 → target, invalidating earlier shapes)
+        ensureCollisionShapes(on: creatureEntity)
+
         if isDog, let controller = dogAnimationController {
             // Play the baked spawn animation, which auto-transitions to idle loop
             controller.playSpawn()
@@ -272,6 +276,81 @@ final class CreatureSpawner {
             target = entity.parent
         }
         return nil
+    }
+
+    // MARK: - Collision Shape Guarantee
+
+    /// Ensures the entity (and its children) have valid collision shapes for tap detection.
+    /// Called AFTER the morph animation completes so the entity is at its final scale.
+    private func ensureCollisionShapes(on entity: Entity) {
+        if let modelEntity = entity as? ModelEntity {
+            modelEntity.generateCollisionShapes(recursive: true)
+            Logger.ar.info("Generated collision shapes from ModelEntity mesh (recursive)")
+            return
+        }
+
+        var foundModel = false
+        for child in entity.children {
+            if let childModel = child as? ModelEntity {
+                childModel.generateCollisionShapes(recursive: true)
+                foundModel = true
+            }
+        }
+        if foundModel {
+            Logger.ar.info("Generated collision shapes on child ModelEntities")
+            return
+        }
+
+        let bounds = entity.visualBounds(relativeTo: entity)
+        guard bounds.extents.x > 0, bounds.extents.y > 0, bounds.extents.z > 0 else {
+            Logger.ar.warning("Visual bounds are zero — cannot create collision shape")
+            return
+        }
+        let box = ShapeResource.generateBox(size: bounds.extents)
+            .offsetBy(translation: bounds.center)
+        entity.components.set(CollisionComponent(shapes: [box]))
+        Logger.ar.info("Created manual box collision shape from visual bounds")
+    }
+
+    // MARK: - Tap Handling (called from TapCatcherView)
+
+    /// Receives a tap coordinate from the SwiftUI TapCatcherView overlay.
+    /// This bypasses ARView's internal gesture system which blocks taps after
+    /// collision shapes are generated.
+    func handleTapAtPoint(_ location: CGPoint) {
+        // Dismiss radial menu on any tap
+        if appState?.isRadialMenuVisible == true {
+            appState?.isRadialMenuVisible = false
+            return
+        }
+
+        // Strategy 1: RealityKit collision-based hit test
+        if let hitEntity = arView.entity(at: location) {
+            if let spawned = findSpawnedEntity(from: hitEntity) {
+                guard !spawned.type.isStaticObject else { return }
+                playTapReaction(on: spawned.entity)
+                return
+            }
+        }
+
+        // Strategy 2: Projection fallback — works even if collision shapes are broken
+        var closestSpawned: SpawnedEntity?
+        var closestDistance: CGFloat = .greatestFiniteMagnitude
+
+        for spawned in spawnedEntities {
+            guard !spawned.type.isStaticObject else { continue }
+            let worldPos = spawned.entity.position(relativeTo: nil)
+            guard let screenPos = arView.project(worldPos) else { continue }
+            let dist = hypot(location.x - screenPos.x, location.y - screenPos.y)
+            if dist < closestDistance {
+                closestDistance = dist
+                closestSpawned = spawned
+            }
+        }
+
+        if closestDistance < 150, let spawned = closestSpawned {
+            playTapReaction(on: spawned.entity)
+        }
     }
 
     // MARK: - Particle Effects

@@ -13,6 +13,7 @@
 		27DEEEEC3ED7951504A20280 /* ClassificationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CCFD960020971361C181E4C /* ClassificationResult.swift */; };
 		2973D7946E8E8B26C325CB45 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427AB2E977F3352693FE211A /* AppState.swift */; };
 		2A239B2F8972B1CBA7E495DB /* MLService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2EBEECA8F33AD40744C071 /* MLService.swift */; };
+		3AC1BC1F2F88F42300D8E154 /* TapCatcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC1BC1E2F88F42300D8E154 /* TapCatcherView.swift */; };
 		3AC5439F2F8689B300827F34 /* DogAnimationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC5439E2F8689B300827F34 /* DogAnimationController.swift */; };
 		3AC543A32F868FFE00827F34 /* DogAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC543A22F868FFE00827F34 /* DogAction.swift */; };
 		3AC543A52F86909A00827F34 /* DogInteractionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC543A42F86909A00827F34 /* DogInteractionController.swift */; };
@@ -74,6 +75,7 @@
 		29F33A92D132E5C0CD45A654 /* PaperDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperDetector.swift; sourceTree = "<group>"; };
 		2CCFD960020971361C181E4C /* ClassificationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassificationResult.swift; sourceTree = "<group>"; };
 		2CDFC403AB956CF596D44B3B /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
+		3AC1BC1E2F88F42300D8E154 /* TapCatcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapCatcherView.swift; sourceTree = "<group>"; };
 		3AC5439E2F8689B300827F34 /* DogAnimationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogAnimationController.swift; sourceTree = "<group>"; };
 		3AC543A22F868FFE00827F34 /* DogAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogAction.swift; sourceTree = "<group>"; };
 		3AC543A42F86909A00827F34 /* DogInteractionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DogInteractionController.swift; sourceTree = "<group>"; };
@@ -184,6 +186,7 @@
 				3AC5439E2F8689B300827F34 /* DogAnimationController.swift */,
 				3AC543A42F86909A00827F34 /* DogInteractionController.swift */,
 				3AC543A62F86909A00827F34 /* BaseballInteractionController.swift */,
+				3AC1BC1E2F88F42300D8E154 /* TapCatcherView.swift */,
 			);
 			path = ARExperience;
 			sourceTree = "<group>";
@@ -405,6 +408,7 @@
 				DFD6F14652BAB3EDC4FD5674 /* FeatureExtractor.swift in Sources */,
 				5CA004E0640471A17CE08890 /* Logger+Extensions.swift in Sources */,
 				2A239B2F8972B1CBA7E495DB /* MLService.swift in Sources */,
+				3AC1BC1F2F88F42300D8E154 /* TapCatcherView.swift in Sources */,
 				D2C041318C689FB15B422EDA /* PaperDetector.swift in Sources */,
 				764A10A7A76979896BDFA496 /* PersistedCreature.swift in Sources */,
 				81DEC719A36A928FD416C7C1 /* SceneManager.swift in Sources */,
