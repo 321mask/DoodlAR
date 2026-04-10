@@ -20,5 +20,7 @@
 	<string>1</string>
 	<key>NSCameraUsageDescription</key>
 	<string>DoodlAR needs camera access to detect your drawings and create AR creatures.</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>

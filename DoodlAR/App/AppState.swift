@@ -25,6 +25,9 @@ final class AppState {
     /// All creatures discovered in this session (persisted via SwiftData separately).
     var discoveredCreatures: [Creature] = []
 
+    /// Whether the onboarding entry screen is presented.
+    var isEntryPresented = true
+
     /// Whether the collection gallery is presented.
     var isCollectionPresented = false
 
@@ -74,4 +77,11 @@ final class AppState {
 
     /// Whether all spatial audio is muted.
     var isMuted = false
+
+    // MARK: - Entry / Onboarding
+
+    /// Dismisses the onboarding entry screen.
+    func dismissEntry() {
+        isEntryPresented = false
+    }
 }

@@ -56,9 +56,17 @@ final class CreatureSpawner {
     /// Tracks which entity the long-press or pan gesture started on (for baseball interactions).
     private var activePanTarget: SpawnedEntity?
 
+    /// Stores the original scale for each entity so tap reactions never accumulate scale drift.
+    private var originalScales: [ObjectIdentifier: SIMD3<Float>] = [:]
+
+    /// The spawned entity currently being dragged via long-press.
+    private var dragTarget: SpawnedEntity?
+
+    /// Timer that continuously updates the drag target's position while held.
+    private var dragTimer: Timer?
+
     init(arView: ARView) {
         self.arView = arView
-        setupGestureRecognizers()
     }
 
     // MARK: - Spawn Sequence
@@ -98,6 +106,8 @@ final class CreatureSpawner {
             creatureEntity = await createCreatureEntity(for: creatureType, tintColors: features.dominantColors)
         }
 
+        // Capture the target scale BEFORE shrinking to invisible
+        let customTargetScale = creatureEntity.scale
         creatureEntity.scale = SIMD3(repeating: 0.001) // Start invisible
         creatureEntity.position.y = 0.0
         anchor.addChild(creatureEntity)
@@ -126,16 +136,24 @@ final class CreatureSpawner {
             timingFunction: .easeIn
         )
 
-        // Grow creature from flat to full size (use the scale assigned during loading)
-        let customTargetScale = creatureEntity.scale
+        // Grow creature from flat to full size (rise slightly during morph)
         creatureEntity.move(
-            to: Transform(scale: customTargetScale, translation: SIMD3(0, 0.05, 0)),
+            to: Transform(scale: customTargetScale, translation: SIMD3(0, 0.06, 0)),
             relativeTo: anchor,
             duration: morphDuration,
             timingFunction: .easeOut
         )
 
         try await Task.sleep(for: .milliseconds(Int(morphDuration * 1000)))
+
+        // Land on the surface after morph
+        creatureEntity.move(
+            to: Transform(scale: customTargetScale, translation: SIMD3(0, 0, 0)),
+            relativeTo: anchor,
+            duration: 0.4,
+            timingFunction: .easeIn
+        )
+        try await Task.sleep(for: .milliseconds(400))
 
         // Cleanup: remove sketch and particles
         sketchEntity.removeFromParent()
@@ -145,6 +163,9 @@ final class CreatureSpawner {
             try? await Task.sleep(for: .seconds(2))
             particleEntity.removeFromParent()
         }
+
+        // Record the original scale so tap reactions never accumulate drift
+        originalScales[ObjectIdentifier(creatureEntity)] = customTargetScale
 
         // Phase 3: Creature alive
         // Re-generate collision shapes now that the entity is at its final scale
@@ -186,12 +207,11 @@ final class CreatureSpawner {
             )
         }
 
-        // Start mesh navigation on LiDAR devices (skip for static objects and dogs with baked anims)
+        // Prepare mesh navigator on LiDAR devices (paused — creature stays on its surface)
         if isSceneReconstructionAvailable && !creatureType.isStaticObject && !isDog {
             let navigator = CreatureNavigator(anchor: anchor, entity: creatureEntity, arView: arView)
-            navigator.start()
             navigators[ObjectIdentifier(creatureEntity)] = navigator
-            Logger.ar.info("Navigator started for \(creatureType.displayName)")
+            Logger.ar.info("Navigator initialized (paused) for \(creatureType.displayName)")
         }
 
         Logger.ar.info("Creature \(creatureType.displayName) spawned and alive")
@@ -219,6 +239,7 @@ final class CreatureSpawner {
 
         arView.scene.anchors.removeAll()
         spawnedEntities.removeAll()
+        originalScales.removeAll()
         appState?.sceneObjectTypes.removeAll()
         Logger.ar.info("Scene cleared")
     }
@@ -429,75 +450,49 @@ final class CreatureSpawner {
         }
     }
 
-    // MARK: - Gesture Recognizers
+    // MARK: - Gesture Handling (called from TapCatcherView)
 
-    /// Sets up tap, long-press, and pan gesture recognizers on the AR view.
-    private func setupGestureRecognizers() {
-        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
-        longPress.minimumPressDuration = 0.5
-
-        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-
-        // Tap should fail if long press is recognized (prevents conflicts)
-        tap.require(toFail: longPress)
-
-        arView.addGestureRecognizer(tap)
-        arView.addGestureRecognizer(longPress)
-        arView.addGestureRecognizer(pan)
-    }
-
-    /// Handles a tap on the AR view — if it hits a creature, play a reaction.
-    @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
-        let location = recognizer.location(in: arView)
-
-        // Dismiss radial menu on any tap
-        if appState?.isRadialMenuVisible == true {
-            appState?.isRadialMenuVisible = false
-            return
-        }
-
-        guard let hitEntity = arView.entity(at: location) else { return }
-
-        if let spawned = findSpawnedEntity(from: hitEntity) {
-            // Don't play tap reaction on static objects
-            guard !spawned.type.isStaticObject else { return }
-            playTapReaction(on: spawned.entity)
-        }
-    }
-
-    /// Handles long-press: dog → show radial menu, baseball → enter hold-to-place mode.
-    @objc private func handleLongPress(_ recognizer: UILongPressGestureRecognizer) {
-        let location = recognizer.location(in: arView)
-
-        switch recognizer.state {
+    /// Handles a long-press gesture state from the TapCatcherView overlay.
+    /// Long-press "picks up" the object — it then follows where the device points until released.
+    func handleLongPress(state: UIGestureRecognizer.State, location: CGPoint) {
+        switch state {
         case .began:
-            guard let hitEntity = arView.entity(at: location),
-                  let spawned = findSpawnedEntity(from: hitEntity) else { return }
+            // Find the entity near the long-press location
+            var spawned = closestSpawnedEntity(toScreenPoint: location, maxDistance: 150)
+            if spawned == nil, let hitEntity = arView.entity(at: location) {
+                spawned = findSpawnedEntity(from: hitEntity)
+            }
+            guard let target = spawned else { return }
 
-            if spawned.type == .dog {
-                showRadialMenu(for: spawned.entity)
-            } else if spawned.type == .baseball {
-                baseballInteractionController?.beginHold(at: location)
+            if target.type == .dog {
+                showRadialMenu(for: target.entity)
             }
 
-        case .changed:
-            baseballInteractionController?.updateHold(at: location)
+            // Enter drag mode — freeze entity at current position
+            dragTarget = target
+            navigators[ObjectIdentifier(target.entity)]?.stop()
+            let baseScale = originalScales[ObjectIdentifier(target.entity)] ?? target.entity.scale
+            target.entity.stopAllAnimations()
+            target.entity.scale = baseScale
+
+            // Start a timer that continuously moves the entity to where the device center points.
+            // This works both when the user moves their finger AND when they move the device.
+            startDragTimer()
 
         case .ended, .cancelled:
-            baseballInteractionController?.endHold()
+            finishDrag()
 
         default:
             break
         }
     }
 
-    /// Handles pan gesture on the baseball for swipe-to-throw.
-    @objc private func handlePan(_ recognizer: UIPanGestureRecognizer) {
-        let location = recognizer.location(in: arView)
+    /// Handles a pan gesture state from the TapCatcherView overlay.
+    func handlePan(state: UIGestureRecognizer.State, location: CGPoint, velocity: CGPoint) {
+        // If dragging, ignore pan
+        if dragTarget != nil { return }
 
-        switch recognizer.state {
+        switch state {
         case .began:
             guard let hitEntity = arView.entity(at: location),
                   let spawned = findSpawnedEntity(from: hitEntity),
@@ -514,7 +509,6 @@ final class CreatureSpawner {
 
         case .ended:
             guard activePanTarget != nil else { return }
-            let velocity = recognizer.velocity(in: arView)
             baseballInteractionController?.endPan(at: location, velocity: velocity)
             activePanTarget = nil
 
@@ -525,6 +519,83 @@ final class CreatureSpawner {
         default:
             break
         }
+    }
+
+    /// Starts a repeating timer that moves the drag target to where the center of the screen points.
+    private func startDragTimer() {
+        dragTimer?.invalidate()
+        dragTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateDragPosition()
+            }
+        }
+    }
+
+    /// Raycasts from the center of the screen and moves the drag target there.
+    private func updateDragPosition() {
+        guard let target = dragTarget else {
+            dragTimer?.invalidate()
+            dragTimer = nil
+            return
+        }
+
+        let center = CGPoint(x: arView.bounds.midX, y: arView.bounds.midY)
+        let results = arView.raycast(from: center, allowing: .estimatedPlane, alignment: .horizontal)
+        guard let hit = results.first else { return }
+
+        let targetPos = SIMD3<Float>(
+            hit.worldTransform.columns.3.x,
+            hit.worldTransform.columns.3.y,
+            hit.worldTransform.columns.3.z
+        )
+
+        // Limit movement to 0.5m per tick to prevent teleportation
+        let currentPos = target.anchor.position(relativeTo: nil)
+        let distance = simd_length(targetPos - currentPos)
+        guard distance < 0.5 else { return }
+
+        // Smooth movement
+        target.anchor.move(
+            to: Transform(
+                scale: target.anchor.scale,
+                rotation: target.anchor.transform.rotation,
+                translation: targetPos
+            ),
+            relativeTo: nil,
+            duration: 0.08,
+            timingFunction: .linear
+        )
+    }
+
+    /// Ends a drag interaction and restarts idle animations.
+    private func finishDrag() {
+        dragTimer?.invalidate()
+        dragTimer = nil
+
+        guard let target = dragTarget else { return }
+        if !target.type.isStaticObject && target.type != .dog {
+            startIdleAnimationLoop(for: target.entity, anchor: target.anchor)
+        }
+        ensureCollisionShapes(on: target.entity)
+        dragTarget = nil
+    }
+
+    /// Finds the closest spawned entity to a screen point within a maximum distance.
+    private func closestSpawnedEntity(toScreenPoint point: CGPoint, maxDistance: CGFloat) -> SpawnedEntity? {
+        var closest: SpawnedEntity?
+        var closestDist: CGFloat = .greatestFiniteMagnitude
+
+        for spawned in spawnedEntities {
+            let worldPos = spawned.entity.position(relativeTo: nil)
+            guard let screenPos = arView.project(worldPos) else { continue }
+            let dist = hypot(point.x - screenPos.x, point.y - screenPos.y)
+            if dist < closestDist {
+                closestDist = dist
+                closest = spawned
+            }
+        }
+
+        return closestDist <= maxDistance ? closest : nil
     }
 
     /// Shows the floating radial menu above the dog.
@@ -558,27 +629,36 @@ final class CreatureSpawner {
         // Fallback bounce animation for other creature types
         guard let parent = entity.parent else { return }
 
-        let currentTransform = entity.transform
+        // Always use the stored original scale to prevent accumulation
+        let baseScale = originalScales[ObjectIdentifier(entity)] ?? entity.scale
+        let baseTranslation = entity.transform.translation
         let jumpHeight: Float = 0.04
 
-        // Jump up
+        // Jump up with a slight scale bump
         let jumpUp = Transform(
-            scale: SIMD3(repeating: currentTransform.scale.x * 1.15),
-            rotation: currentTransform.rotation,
+            scale: baseScale * 1.15,
+            rotation: entity.transform.rotation,
             translation: SIMD3(
-                currentTransform.translation.x,
-                currentTransform.translation.y + jumpHeight,
-                currentTransform.translation.z
+                baseTranslation.x,
+                baseTranslation.y + jumpHeight,
+                baseTranslation.z
             )
         )
 
         entity.move(to: jumpUp, relativeTo: parent, duration: 0.2, timingFunction: .easeOut)
 
-        // Come back down
+        // Come back down to exact original scale
+        let restoreTransform = Transform(
+            scale: baseScale,
+            rotation: entity.transform.rotation,
+            translation: baseTranslation
+        )
+
         Task {
             try? await Task.sleep(for: .milliseconds(200))
+            guard entity.parent != nil else { return }
             entity.move(
-                to: currentTransform,
+                to: restoreTransform,
                 relativeTo: parent,
                 duration: 0.3,
                 timingFunction: .easeIn

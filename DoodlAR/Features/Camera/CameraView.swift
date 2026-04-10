@@ -14,6 +14,7 @@ struct CameraView: View {
     @Bindable var appState: AppState
 
     @Environment(\.modelContext) private var modelContext
+    @State private var hasPreparedExperience = false
 
     var body: some View {
         ZStack {
@@ -21,12 +22,20 @@ struct CameraView: View {
             ARContainerView(viewModel: arViewModel)
                 .ignoresSafeArea()
 
-            // Transparent tap catcher — intercepts taps BEFORE they reach ARView.
+            // Gesture overlay — intercepts all gestures BEFORE they reach ARView.
             // This is necessary because RealityKit hijacks gesture recognizers
             // on ARView after generateCollisionShapes() is called.
-            TapCatcherView { location in
-                arViewModel.creatureSpawner.handleTapAtPoint(location)
-            }
+            TapCatcherView(
+                onTap: { location in
+                    arViewModel.creatureSpawner.handleTapAtPoint(location)
+                },
+                onLongPress: { state, location in
+                    arViewModel.creatureSpawner.handleLongPress(state: state, location: location)
+                },
+                onPan: { state, location, velocity in
+                    arViewModel.creatureSpawner.handlePan(state: state, location: location, velocity: velocity)
+                }
+            )
             .ignoresSafeArea()
 
             // Detection overlay
@@ -67,17 +76,45 @@ struct CameraView: View {
         .task {
             collectionViewModel.configure(with: modelContext)
             collectionViewModel.loadCollection()
-            arViewModel.startSession()
-            cameraViewModel.bind(to: arViewModel)
-            await cameraViewModel.loadModel()
+            await prepareExperienceIfNeeded()
+        }
+        .onChange(of: appState.isEntryPresented) { _, isPresented in
+            if !isPresented {
+                Task {
+                    await prepareExperienceIfNeeded()
+                }
+            }
         }
         .sheet(isPresented: $appState.isCollectionPresented) {
             CollectionView(viewModel: collectionViewModel, arViewModel: arViewModel)
+        }
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { appState.isEntryPresented },
+                set: { isPresented in
+                    if !isPresented {
+                        appState.dismissEntry()
+                    }
+                }
+            )
+        ) {
+            OnboardingView {
+                appState.dismissEntry()
+            }
         }
         .sensoryFeedback(.impact(flexibility: .soft), trigger: cameraViewModel.isPaperDetected)
         .sensoryFeedback(.success, trigger: appState.hapticClassification)
         .sensoryFeedback(.impact(weight: .heavy), trigger: appState.hapticSpawn)
         .sensoryFeedback(.error, trigger: appState.hapticError)
+    }
+
+    @MainActor
+    private func prepareExperienceIfNeeded() async {
+        guard !hasPreparedExperience, !appState.isEntryPresented else { return }
+        hasPreparedExperience = true
+        arViewModel.startSession()
+        cameraViewModel.bind(to: arViewModel)
+        await cameraViewModel.loadModel()
     }
 
     // MARK: - Top Bar
@@ -278,13 +315,10 @@ struct CameraView: View {
     private var aliveBar: some View {
         HStack(spacing: 12) {
             if let result = cameraViewModel.lastDetectionResult {
-                Image(systemName: "sparkles")
-                    .foregroundStyle(.yellow)
-                    .font(.title2)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(result.classificationResult.creatureType.displayName) is Alive!")
+                    Text(result.classificationResult.creatureType.displayName)
                         .font(.headline)
-                    Text("Auto-resetting scanner...")
+                    Text("\(Int(result.classificationResult.confidence * 100))% match")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -309,6 +343,24 @@ struct CameraView: View {
                 .buttonStyle(.bordered)
                 .tint(appState.isDogWalking ? .orange : nil)
             }
+
+            Button("Collect") {
+                withAnimation(.spring(duration: 0.3)) {
+                    addToCollection()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.green)
+
+            Button("New Scan") {
+                Task {
+                    withAnimation(.spring(duration: 0.3)) {
+                        appState.spawnState = .idle
+                    }
+                    await cameraViewModel.resetDetection()
+                }
+            }
+            .buttonStyle(.bordered)
         }
         .liquidGlassBar()
     }
