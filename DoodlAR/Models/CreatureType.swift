@@ -37,10 +37,33 @@ enum CreatureType: String, CaseIterable, Codable, Sendable {
 
     /// Maps a model output label string to a `CreatureType`.
     ///
-    /// Performs case-insensitive matching against raw values. Falls back to `.unknown`
-    /// for unrecognized labels, allowing the system to work with any classifier model
-    /// (including the test AppleBanana model during development).
+    /// Performs case-insensitive matching against raw values, with a small alias table
+    /// so common label variants ("ball", "puppy", "shelter") still resolve to the right
+    /// creature. Falls back to `.unknown` for anything we can't match.
     static func from(label: String) -> CreatureType {
-        CreatureType(rawValue: label.lowercased()) ?? .unknown
+        let normalized = label.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let direct = CreatureType(rawValue: normalized) {
+            return direct
+        }
+
+        switch normalized {
+        case "ball", "balls", "baseballs":
+            return .baseball
+        case "tents", "shelter", "camp":
+            return .tent
+        case "puppy", "dogs":
+            return .dog
+        case "kitten", "cats":
+            return .cat
+        case "birds":
+            return .bird
+        case "apples":
+            return .apple
+        case "bananas":
+            return .banana
+        default:
+            return .unknown
+        }
     }
 }

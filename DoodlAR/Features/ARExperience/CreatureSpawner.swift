@@ -275,8 +275,7 @@ final class CreatureSpawner {
 
         case .chaseBall:
             guard let ballSpawn = spawnedEntity(ofType: .baseball) else { return }
-            let ballPos = ballSpawn.anchor.position(relativeTo: nil)
-            interactionController.chaseBall(ballWorldPosition: ballPos)
+            interactionController.chaseBall(ballAnchor: ballSpawn.anchor)
         }
     }
 

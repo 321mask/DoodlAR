@@ -23,6 +23,9 @@ final class DogInteractionController {
     private weak var arView: ARView?
     private var interactionTask: Task<Void, Never>?
 
+    /// Tracks the ball anchor while the dog carries it during fetch.
+    private var carryTask: Task<Void, Never>?
+
     // Dependencies (configured after dog spawns)
     private var dogAnchor: AnchorEntity?
     private var dogEntity: Entity?
@@ -47,7 +50,7 @@ final class DogInteractionController {
 
     // MARK: - Go to Tent
 
-    /// Dog walks to the tent, enters it (scales down), waits, then comes back out.
+    /// Dog walks to the tent, steps inside (translates + scales down), waits, then steps back out.
     func goToTent(tentWorldPosition: SIMD3<Float>) {
         guard state == .idle else { return }
         state = .walkingToTent
@@ -56,78 +59,155 @@ final class DogInteractionController {
         interactionTask = Task { [weak self] in
             guard let self else { return }
 
-            // Start walk animation
             self.animationController?.playWalk()
 
-            // Walk to the tent (stop slightly in front)
-            guard let anchor = self.dogAnchor else { return }
+            guard let anchor = self.dogAnchor, let entity = self.dogEntity else { return }
             let currentPos = anchor.position(relativeTo: nil)
-            let direction = simd_normalize(tentWorldPosition - currentPos)
-            let targetPos = tentWorldPosition - direction * 0.03
 
-            await self.walkTo(targetPos)
+            // Horizontal direction from dog to tent — used to position approach + exit points.
+            let delta = tentWorldPosition - currentPos
+            let horizontalDelta = SIMD3<Float>(delta.x, 0, delta.z)
+            let direction: SIMD3<Float>
+            if simd_length(horizontalDelta) > 0.0001 {
+                direction = simd_normalize(horizontalDelta)
+            } else {
+                direction = SIMD3<Float>(0, 0, 1)
+            }
+
+            // Phase 1: walk up to the tent entrance.
+            let approachPos = tentWorldPosition - direction * 0.06
+            await self.walkTo(approachPos)
 
             guard !Task.isCancelled else { return }
 
-            // "Enter" tent: scale down to disappear
+            // Phase 2: step INTO the tent while shrinking — looks like entering, not vanishing.
             self.state = .insideTent
-            self.animationController?.playIdle()
-
-            guard let entity = self.dogEntity else { return }
             let originalScale = entity.scale
 
+            anchor.move(
+                to: Transform(
+                    scale: anchor.scale,
+                    rotation: anchor.transform.rotation,
+                    translation: tentWorldPosition
+                ),
+                relativeTo: nil,
+                duration: 0.5,
+                timingFunction: .easeIn
+            )
             entity.move(
                 to: Transform(scale: SIMD3(repeating: 0.001), translation: entity.position),
                 relativeTo: entity.parent,
                 duration: 0.5,
                 timingFunction: .easeIn
             )
+            try? await Task.sleep(for: .milliseconds(500))
+            self.animationController?.playIdle()
 
-            // Stay inside tent for 3 seconds
+            // Phase 3: rest inside the tent.
             try? await Task.sleep(for: .seconds(3))
 
             guard !Task.isCancelled else { return }
 
-            // Come back out: scale up
+            // Phase 4: scale up and step back out of the tent.
+            self.animationController?.playWalk()
+            let exitPos = tentWorldPosition - direction * 0.08
             entity.move(
                 to: Transform(scale: originalScale, translation: entity.position),
                 relativeTo: entity.parent,
                 duration: 0.5,
                 timingFunction: .easeOut
             )
+            anchor.move(
+                to: Transform(
+                    scale: anchor.scale,
+                    rotation: anchor.transform.rotation,
+                    translation: exitPos
+                ),
+                relativeTo: nil,
+                duration: 0.5,
+                timingFunction: .easeOut
+            )
 
             try? await Task.sleep(for: .milliseconds(500))
+            self.animationController?.playIdle()
             self.state = .idle
         }
     }
 
     // MARK: - Chase Baseball
 
-    /// Dog walks to the baseball, then plays a reaction on arrival.
-    func chaseBall(ballWorldPosition: SIMD3<Float>) {
+    /// Dog walks to the baseball, picks it up, carries it back to where the dog started, drops it.
+    func chaseBall(ballAnchor: AnchorEntity) {
         guard state == .idle else { return }
         state = .chasingBall
 
         interactionTask?.cancel()
-        interactionTask = Task { [weak self] in
-            guard let self else { return }
+        carryTask?.cancel()
 
-            // Start walk animation
+        interactionTask = Task { [weak self, weak ballAnchor] in
+            guard let self, let ballAnchor else { return }
+            guard let dogAnchor = self.dogAnchor else { return }
+
+            // Remember the dog's starting position — that's where the ball gets dropped.
+            let homePosition = dogAnchor.position(relativeTo: nil)
+
+            // Phase 1: walk to the ball.
             self.animationController?.playWalk()
-
-            // Walk to ball
-            await self.walkTo(ballWorldPosition)
+            let ballPos = ballAnchor.position(relativeTo: nil)
+            await self.walkTo(ballPos)
 
             guard !Task.isCancelled else { return }
 
-            // React to ball
+            // Phase 2: brief pickup reaction.
             self.state = .reactingToBall
             self.animationController?.playTapReact()
+            try? await Task.sleep(for: .milliseconds(600))
 
-            // Wait for reaction to finish (tapReact auto-transitions to idle)
-            try? await Task.sleep(for: .seconds(1.5))
+            guard !Task.isCancelled else { return }
 
+            // Phase 3: walk home carrying the ball.
+            self.animationController?.playWalk()
+            self.startCarrying(ballAnchor: ballAnchor)
+
+            await self.walkTo(homePosition)
+
+            self.carryTask?.cancel()
+            self.carryTask = nil
+
+            guard !Task.isCancelled else { return }
+
+            // Drop the ball just in front of the dog's snout.
+            let dogPos = dogAnchor.position(relativeTo: nil)
+            let dogForward = dogAnchor.transform.rotation.act(SIMD3<Float>(0, 0, 1))
+            let dropPos = SIMD3<Float>(
+                dogPos.x + dogForward.x * 0.04,
+                dogPos.y,
+                dogPos.z + dogForward.z * 0.04
+            )
+            ballAnchor.setPosition(dropPos, relativeTo: nil)
+
+            self.animationController?.playIdle()
             self.state = .idle
+        }
+    }
+
+    /// Drives the ball's anchor to follow the dog's mouth each tick until cancelled.
+    private func startCarrying(ballAnchor: AnchorEntity) {
+        carryTask?.cancel()
+        carryTask = Task { [weak self, weak ballAnchor] in
+            while !Task.isCancelled {
+                guard let self,
+                      let ballAnchor,
+                      let dogAnchor = self.dogAnchor else { return }
+
+                let dogPos = dogAnchor.position(relativeTo: nil)
+                let dogRot = dogAnchor.transform.rotation
+                // Place the ball at the dog's snout: slightly forward (+z local) and raised (+y).
+                let mouthOffset = dogRot.act(SIMD3<Float>(0, 0.025, 0.06))
+                ballAnchor.setPosition(dogPos + mouthOffset, relativeTo: nil)
+
+                try? await Task.sleep(for: .milliseconds(33))
+            }
         }
     }
 
@@ -172,6 +252,8 @@ final class DogInteractionController {
     func cancel() {
         interactionTask?.cancel()
         interactionTask = nil
+        carryTask?.cancel()
+        carryTask = nil
         animationController?.playIdle()
         state = .idle
     }
